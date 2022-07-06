@@ -13,12 +13,12 @@ def get_replicates(name_experiments, replicate_prefix="rep"):
         
         if is_replicate:
         
-            if "rep" in name_experiment:
-                str_num = name_experiment.split("rep")[1]
+            if replicate_prefix in name_experiment:
+                str_num = name_experiment.split(replicate_prefix)[1]
                 num = int(str_num)
 
 
-                shorted_name = name_experiment.replace(" rep"+str_num,"")
+                shorted_name = name_experiment.replace(" "+replicate_prefix+str_num,"")
 
             else:
                 str_num = name_experiment.split("-")[1]
