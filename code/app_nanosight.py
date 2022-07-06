@@ -23,7 +23,6 @@ from app_tools import get_replicates, create_missing_dir
 
 
 
-
 ### Set app parameters
 
 bg_color = "peachpuff"

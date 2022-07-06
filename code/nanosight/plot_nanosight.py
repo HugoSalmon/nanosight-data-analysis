@@ -128,18 +128,6 @@ def plot_nanosight_size_distribution(concatenated_results, name, save_path_fig):
     ax[0].plot(bin_centers[start:stop], concentration_average[start:stop], color="blue", label="Average concentration")
     ax[0].fill_between(x=bin_centers[start:stop], y1=concentration_average[start:stop]-ci[start:stop], y2=concentration_average[start:stop]+ci[start:stop], color='blue', alpha=0.1, label="95%-Confidence interval")
 
-    # if "Raw Concentration average "+name in concatenated_results.columns:
-    #     raw_concentration_average = concatenated_results["Raw Concentration average "+name]
-        
-    #     raw_concentration_ste = concatenated_results["Raw Standard error "+name]     
-    #     ci = quantile * concentration_ste
-        
-    #     ax[0].bar(bin_centers[start:stop], raw_concentration_average, color="grey", alpha=0.1, label="Raw histogram")        
-    #     ax[1].bar(bin_centers[start:stop], raw_concentration_average, color="blue", alpha=0.5, label="Raw histogram")        
-    #     ax[1].fill_between(x=bin_centers[start:stop], y1=raw_concentration_average[start:stop]-ci[start:stop], y2=raw_concentration_average[start:stop]+ci[start:stop], color='blue', alpha=0.2, label="95%-Confidence interval")
-    
-    #     ax[1].legend(fontsize=13)
-    #     ax[1].tick_params(axis="both", labelsize=13)
                     
     ax[0].legend(fontsize=13)
     ax[0].tick_params(axis="both", labelsize=13)
