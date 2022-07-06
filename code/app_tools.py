@@ -17,7 +17,6 @@ def get_replicates(name_experiments, replicate_prefix="rep"):
                 str_num = name_experiment.split(replicate_prefix)[1]
                 num = int(str_num)
 
-
                 shorted_name = name_experiment.replace(" "+replicate_prefix+str_num,"")
 
             else:
