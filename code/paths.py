@@ -15,7 +15,7 @@ source = Path().resolve().parent
 
 
 
-for dir_ in ["nanosight-app-results"]:
+for dir_ in ["nanosight_app_results"]:
     if not os.path.exists(Path(source, dir_)):
         print("No " + dir_ + " directory in the nanosight-videodrop-data-analysis directory." \
                         " Creating one.")
