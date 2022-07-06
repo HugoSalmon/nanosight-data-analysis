@@ -25,7 +25,7 @@ def extract_nanosight_experiment_measures(directory_path, autosampler=False, dil
         
         try:
             splitted = name_experiment.split(" ")
-            dilution_string = [s for s in splitted if dilution_prefix in s][0]
+            dilution_string = [s for s in splitted if dilution_prefix in s][-1]
             dilution_factor = int(dilution_string.replace(dilution_prefix,""))
             # print(name_experiment, dilution_factor)
             dilutions.append(dilution_factor)
