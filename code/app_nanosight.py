@@ -291,7 +291,7 @@ class App():
             
             if not self.manual :
                 self.data_correctly_loaded = tkinter.Label(self.load_data_frame, text = "Data correctly loaded", bg=bg_color, fg="orangered")
-                self.data_correctly_loaded.grid(row=6, columnspan=3, column=0, pady=10*ratio_pady)
+                self.data_correctly_loaded.grid(row=7, columnspan=3, column=0, pady=10*ratio_pady)
 
                 
                 self.list_experiments_frame = tkinter.LabelFrame(self.root, text="List of samples", font = TkFont.Font(weight="bold"), bg=bg_color)
