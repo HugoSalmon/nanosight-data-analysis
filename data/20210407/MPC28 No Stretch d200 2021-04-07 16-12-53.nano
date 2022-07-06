@@ -1,0 +1,56 @@
+[Filenames]
+MPC28 No Stretch d200 2021-04-07 16-13-21.avi
+MPC28 No Stretch d200 2021-04-07 16-14-34.avi
+MPC28 No Stretch d200 2021-04-07 16-15-47.avi
+MPC28 No Stretch d200 2021-04-07 16-17-01.avi
+MPC28 No Stretch d200 2021-04-07 16-18-14.avi
+
+[Details]
+CaptureAppBuild=NTA 3.3 - Sample Assistant Dev Build 3.3.203
+Operator=MG
+Pretreatment=
+SampleName=d200
+Diluent=pbs
+Remarks=
+TimeCaptured=16:12:53  07/04/2021
+ModelNo=8
+ScriptName=Standard 5x60.txt
+
+[CaptureSettings]
+PixelSize=140,140,140,140,140
+Temperature=24.44,24.485,24.549,24.58,24.583
+Viscosity=0.900149,0.89922,0.897901,0.897263,0.897201
+WaterViscosity=1,1,1,1,1
+DilutionFactor=0,0,0,0,0
+CameraType=4,4,4,4,4
+CaptureMode=0,0,0,0,0
+FramesPerSecond=24.9825,24.9825,24.9825,24.9825,24.9825
+TotalFrames=1498,1498,1498,1498,1498
+Shutter=32.5,32.5,32.5,32.5,32.5
+ShutterB=0,0,0,0,0
+SliderShutter=1300,1300,1300,1300,1300
+SliderShutterB=0,0,0,0,0
+Gain=512,512,512,512,512
+GainB=0,0,0,0,0
+CameraHistogramMin=0,0,0,0,0
+CameraHistogramMax=2470,2470,2470,2470,2470
+CameraHistogramMinB=0,0,0,0,0
+CameraHistogramMaxB=0,0,0,0,0
+CameraLevel=16,16,16,16,16
+StagePosition=0,0,0,0,0
+FocusPosition=9,9,-13,-13,-13
+SyringePumpSpeed=50,50,50,50,50
+UsingOldCameraLevels=0,0,0,0,0
+ConcCoeffA=-0.2625,-0.2625,-0.2625,-0.2625,-0.2625
+ConcCoeffB=2.259,2.259,2.259,2.259,2.259
+ConcCoeffC=-0.141,-0.141,-0.141,-0.141,-0.141
+ConcCoeffD=-6.1325,-6.1325,-6.1325,-6.1325,-6.1325
+ConcCoeffE=0.028,0.028,0.028,0.028,0.028
+ConcDTMin=2,2,2,2,2
+ConcDTMax=20,20,20,20,20
+ConcBrightnessMin=4,4,4,4,4
+ConcBrightnessMax=9,9,9,9,9
+
+[CurrentView]
+Selected=1,1,1,1,1
+
