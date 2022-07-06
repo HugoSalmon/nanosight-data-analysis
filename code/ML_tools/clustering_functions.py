@@ -6,7 +6,6 @@ from scipy.signal import argrelextrema
 
 
 from pathlib import Path
-from paths import figpath
 
 
 from seaborn import heatmap
