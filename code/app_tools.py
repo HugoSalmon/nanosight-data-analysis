@@ -3,13 +3,13 @@ from pathlib import Path
 from collections import OrderedDict
 
 
-def get_replicates(name_experiments, replicate_prefix="rep"):
+def get_replicates(name_experiments, replicate_prefix="-"):
     
     replicates = OrderedDict({})
 
     for i, name_experiment in enumerate(name_experiments):
 
-        is_replicate = replicate_prefix in name_experiment.split(" ")[-1]
+        is_replicate = replicate_prefix in name_experiment
         
         if is_replicate:
         
@@ -17,7 +17,7 @@ def get_replicates(name_experiments, replicate_prefix="rep"):
                 str_num = name_experiment.split(replicate_prefix)[1]
                 num = int(str_num)
 
-                shorted_name = name_experiment.replace(" "+replicate_prefix+str_num,"")
+                shorted_name = name_experiment.replace(replicate_prefix+str_num,"")
 
             else:
                 str_num = name_experiment.split("-")[1]
