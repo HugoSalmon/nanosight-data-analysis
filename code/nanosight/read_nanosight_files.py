@@ -75,10 +75,12 @@ def read_experiment_summary_file(filepath, autosampler=False):
         results_concentration.drop("index", axis=1, inplace=True)
         results_concentration.drop("key", axis=1, inplace=True)
         results_concentration = results_concentration.astype(float)
+        
 
         concentration_average = results_concentration.mean(axis=1).values[0]
         concentration_std = results_concentration.std(axis=1).values[0]
         results_concentration["Average Concentration (Particles / ml)"] = concentration_average
+        
         results_concentration["Standard Deviation Concentration (Particles / ml)"] = concentration_std         
         
     except:

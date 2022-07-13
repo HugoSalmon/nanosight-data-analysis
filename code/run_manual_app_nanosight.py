@@ -7,16 +7,19 @@ from app_nanosight import App
     
 # """ Lea """
 
-path = Path(datapath, "Data Lea NTA Videodrop")
+path = Path(datapath, "data_wei_sylvain")
 
 data_app = App(data_dir=path,
                 autosampler=False,
-                dilution_prefix="D",
+                dilution_prefix="d",
                 replicate_prefix="rep")
 
 data_app.run_manual()
 
-data_app.plot_nanosight_kolmogorov_test_matrix()
+
+
+
+# data_app.plot_nanosight_kolmogorov_test_matrix()
 
 
 
