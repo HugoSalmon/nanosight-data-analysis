@@ -10,21 +10,15 @@ def get_replicates(name_experiments, replicate_prefix="-"):
     for i, name_experiment in enumerate(name_experiments):
 
         is_replicate = replicate_prefix in name_experiment
-        
-        if is_replicate:
-        
-            if replicate_prefix in name_experiment:
-                str_num = name_experiment.split(replicate_prefix)[1]
-                num = int(str_num)
-
-                shorted_name = name_experiment.replace(replicate_prefix+str_num,"")
-
-            else:
-                str_num = name_experiment.split("-")[1]
-                num = int(str_num)
-                shorted_name = name_experiment.replace("-"+str_num,"")
-            
                 
+        if is_replicate:
+
+            str_num = name_experiment.split(replicate_prefix)[-1]
+
+            num = int(str_num)
+
+            shorted_name = name_experiment.replace(replicate_prefix+str_num,"")
+            
             if shorted_name not in replicates:
                 replicates[shorted_name] = [name_experiment]
             else:

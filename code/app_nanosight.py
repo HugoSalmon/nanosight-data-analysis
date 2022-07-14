@@ -37,7 +37,7 @@ ratio_pady = 1 if platform.system() == 'Linux' else 0.5
 class App():
         
     def __init__(self, data_dir="", autosampler=False,  
-                       dilution_prefix="dilution", replicate_prefix="-",
+                       dilution_prefix="dilution", replicate_prefix="replicate",
                        group_replicates=False):
 
         self.data_dir = data_dir
@@ -85,7 +85,7 @@ class App():
         self.autosampler_tkinter_var = tkinter.BooleanVar(self.root)
         self.group_replicates_tkinter_var = tkinter.BooleanVar(self.root)
         
-        self.replicate_prefix_tkinter_var = tkinter.StringVar(self.root, value="-")
+        self.replicate_prefix_tkinter_var = tkinter.StringVar(self.root, value="replicate")
         
         self.export_dirname = tkinter.StringVar(self.root, value=None)
         self.dilution_prefix_tkinter_var = tkinter.StringVar(self.root, value="dilution")
