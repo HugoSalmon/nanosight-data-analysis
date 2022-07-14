@@ -81,7 +81,7 @@ def read_experiment_summary_file(filepath, autosampler=False):
         concentration_std = results_concentration.std(axis=1).values[0]
         results_concentration["Average Concentration (Particles / ml)"] = concentration_average
         
-        results_concentration["Standard Deviation Concentration (Particles / ml)"] = concentration_std         
+        results_concentration["Standard Deviation"] = concentration_std         
         
     except:
         raise ValueError("Error when reading file", filepath)

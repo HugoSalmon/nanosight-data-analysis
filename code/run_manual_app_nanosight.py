@@ -15,6 +15,7 @@ data_app = App(data_dir=path,
                 replicate_prefix="rep")
 
 data_app.run_manual()
+data_app.export_data()
 
 
 
