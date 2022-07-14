@@ -12,11 +12,11 @@ path = Path(datapath, "data_wei_sylvain")
 data_app = App(data_dir=path,
                 autosampler=False,
                 dilution_prefix="d",
-                replicate_prefix="rep")
+                replicate_prefix="-")
 
 data_app.run_manual()
 data_app.export_data()
-
+data_app.run_clustering_total_concentration_nanosight()
 
 
 

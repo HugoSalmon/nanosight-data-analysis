@@ -51,6 +51,8 @@ class App():
         self.name_data_directory = os.path.basename(data_dir)
 
         self.export_dir = self.name_data_directory
+
+
         
         
     
@@ -147,7 +149,7 @@ class App():
         replicate_choose.grid(column=2, row=4, pady=40*ratio_pady)
 
 
-        button_export_nanosight = tkinter.Button(self.load_data_frame, text = "Load" , command = self.load_nanosight, bg="white", fg="black")
+        button_export_nanosight = tkinter.Button(self.load_data_frame, text = "Load" , command = self.load_data, bg="white", fg="black")
         button_export_nanosight.grid(row=6, columnspan=3, column=0, pady=40*ratio_pady)
 
         """"""""""""""""""""""""""
@@ -162,13 +164,266 @@ class App():
     
     
     def run_manual(self):
-        
+
+
+
+        if not os.path.exists(self.data_dir):
+            
+            raise ValueError("Error, directory does not exist")
+
+            return        
         self.manual = True
-        self.load_nanosight()
+        self.load_data()
 
         
+
+    def load_data(self):
+
         
+
+
+        if not self.manual:
+
+            if hasattr(self, 'list_experiments_frame'):
+                self.list_experiments_frame.destroy()
     
+            if hasattr(self, 'analysis_frame'):
+                self.analysis_frame.destroy()
+                
+            if hasattr(self, "data_correctly_loaded"):
+                self.data_correctly_loaded.destroy()
+                
+            self.dilution_prefix = self.dilution_prefix_tkinter_var.get()
+            self.autosampler = self.autosampler_tkinter_var.get()
+            self.replicate_prefix = self.replicate_prefix_tkinter_var.get()
+     
+
+        
+        self.name_experiments, self.concentration_distributions, \
+            self.total_concentrations, self.dilutions, \
+                self.particles_per_frame, self.validity , self.sizes_attributes \
+                    = extract_nanosight_experiment_measures(Path(datapath, self.data_dir), \
+                        dilution_prefix=self.dilution_prefix, autosampler=self.autosampler) 
+                        
+                        
+
+                        
+        self.size_concentration_attributes = pandas.merge(self.total_concentrations, self.sizes_attributes, left_index=True, right_index=True)
+                        
+        particles_per_frame = [", ".join(["%.1f"%(self.particles_per_frame.loc[name]["Video "+str(k)]) \
+                                          for k in range(1,6)]) for name in self.name_experiments]
+        
+        
+        self.validity_transformed = self.validity=="OK"
+                    
+        self.validity["valid"] = self.validity_transformed.product(axis=1).apply(lambda s: "Reliable" if s==1 else "")
+
+        reliable = [", ".join([self.validity.loc[name]["Video "+str(k)] for k in range(1,6)]) for name in self.name_experiments]
+
+
+        self.replicates = get_replicates(self.name_experiments, replicate_prefix = self.replicate_prefix)
+        
+        self.replicates_exist = np.sum([len(v)>1 for k,v in self.replicates.items()])
+
+
+        
+        if not self.manual :
+            self.data_correctly_loaded = tkinter.Label(self.load_data_frame, text = "Data correctly loaded", bg=bg_color, fg="orangered")
+            self.data_correctly_loaded.grid(row=7, columnspan=3, column=0, pady=10*ratio_pady)
+
+            
+            self.list_experiments_frame = tkinter.LabelFrame(self.root, text="List of samples", font = TkFont.Font(weight="bold"), bg=bg_color)
+            self.list_experiments_frame.grid(row=0, column=1, sticky='news', padx=40*ratio_padx, pady=20*ratio_pady)
+
+            frame_canvas = tkinter.Frame(self.list_experiments_frame)
+            frame_canvas.grid(row=2, column=0, pady=(5, 0), sticky='nw')
+            frame_canvas.grid_rowconfigure(0, weight=1)
+            frame_canvas.grid_columnconfigure(0, weight=1)
+            # Set grid_propagate to False to allow 5-by-5 buttons resizing later
+            frame_canvas.grid_propagate(False)
+            
+            # Add a canvas in that frame
+            canvas = tkinter.Canvas(frame_canvas, bg="yellow")
+            canvas.grid(row=0, column=0, sticky="news")
+            
+            # Link a scrollbar to the canvas
+            vsb = tkinter.Scrollbar(frame_canvas, orient="vertical", command=canvas.yview)
+            vsb.grid(row=0, column=3, sticky='ns', rowspan=len(self.name_experiments)+1)
+            canvas.config(yscrollcommand=vsb.set, bg=bg_color)
+            
+            # Create a frame to contain the buttons
+            frame_buttons = tkinter.Frame(canvas, bg=bg_color)
+            canvas.create_window((0, 0), window=frame_buttons, anchor='nw')
+
+
+            # Set the canvas scrolling region
+            canvas.config(scrollregion=canvas.bbox("all"))
+            
+
+            max_display = 30
+
+            samples_list = []
+
+            names_title = tkinter.Label(frame_buttons, text = "Name", bg=bg_color, fg="black")
+            names_title.grid(row=0, column=0, pady=40*ratio_pady)
+            
+            dilutions_title = tkinter.Label(frame_buttons, text = "Dilution", bg=bg_color, fg="black")
+            dilutions_title.grid(row=0, column=1, pady=40*ratio_pady, padx=30*ratio_padx)
+
+            particles_per_frame_title = tkinter.Label(frame_buttons, text = "Particles per frame", bg=bg_color, fg="black")
+            particles_per_frame_title.grid(row=0, column=2, pady=40*ratio_pady, padx=30*ratio_padx)
+
+
+
+            
+            for k in range(len(self.replicates)):
+                
+                short_name = list(self.replicates.keys())[k]
+                exp = self.replicates[short_name]
+
+                for j in range(len(exp)):
+                                                                
+                    name = exp[j]
+                    index = self.name_experiments.index(name)
+
+                    name_label = tkinter.Label(frame_buttons, text = name, bg=bg_color, fg="black")
+                    name_label.grid(row=1+index+k, column=0, pady=2*ratio_pady)
+                    
+                    dilution_label = tkinter.Label(frame_buttons, text = str(self.dilutions[index]), bg=bg_color, fg="black")
+                    dilution_label.grid(row=1+index+k, column=1, pady=2*ratio_pady, padx=30*ratio_padx)
+
+                    particle_per_frame_label = tkinter.Label(frame_buttons, text = particles_per_frame[index], bg=bg_color, fg="black")
+                    particle_per_frame_label.grid(row=1+index+k, column=2, pady=2*ratio_pady, padx=30*ratio_padx)
+
+                    valid_label = tkinter.Label(frame_buttons, text = self.validity["valid"][index], bg=bg_color, fg="black")
+                    valid_label.grid(row=1+index+k, column=3, pady=2*ratio_pady, padx=30*ratio_padx)
+                                            
+                    
+                    if j == len(exp)-1:
+                        
+                        space = tkinter.Label(frame_buttons, text="", bg=bg_color)
+                        space.grid(row = 2+index+k, column=2, pady=2*ratio_pady, padx=30*ratio_padx)
+                        
+                        
+
+                
+
+
+                    
+            frame_buttons.update_idletasks()
+
+            
+            width2 = frame_buttons.winfo_reqwidth() 
+            height2 = frame_buttons.winfo_reqheight()
+            
+            
+            ratio = 0.8
+            
+            frame_canvas.config(width=width2 , height=min(height2, ratio*self.screen_height))
+            canvas.config(scrollregion=canvas.bbox("all"))
+            
+                            
+               
+       
+            
+                           
+            self.analysis_frame = tkinter.LabelFrame(self.root, text="Analysis", font = TkFont.Font(weight="bold"))
+            self.analysis_frame.configure(background=bg_color)
+            self.analysis_frame.grid(row = 0, column = 2, sticky="N", padx=20*ratio_padx, pady=20*ratio_pady)
+
+            button_export = tkinter.Button(self.analysis_frame, text = "Export data" , command = self.export_data, bg="white", fg="black")
+            button_export.grid(row=1, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
+            
+            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Plot distributions and concentrations" , command = self.plot_nanosight, bg="white", fg="black")
+            button_launch_analysis.grid(row=2, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
+            
+            
+            start = 3
+            
+
+            if self.replicates_exist:
+                check_group_replicates = tkinter.Checkbutton(self.analysis_frame, text="Group replicates", variable=self.group_replicates_tkinter_var, command=self.set_group_replicates, bg=bg_color)
+                check_group_replicates.grid(column=0, row=4, pady=40*ratio_pady)
+                start = 5
+
+            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Clustering normalized distributions" , command = self.run_clustering_normalized_nanosight_size_concentration_distributions_wasserstein, bg="white", fg="black")
+            button_launch_analysis.grid(row=start, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
+            
+            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Clustering total concentrations" , command = self.run_clustering_total_concentration_nanosight, bg="white", fg="black")
+            button_launch_analysis.grid(row=start+1, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
+                   
+            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Statistical test between normalized distributions" , command = self.plot_nanosight_kolmogorov_test_matrix, bg="white", fg="black")
+            button_launch_analysis.grid(row=start+2, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
+            
+
+        samples_list = []
+        for k in range(len(self.replicates)):
+            
+            short_name = list(self.replicates.keys())[k]
+            exp = self.replicates[short_name]
+
+            for j in range(len(exp)):
+                                                            
+                name = exp[j]
+                index = self.name_experiments.index(name)
+                
+                if len(self.replicates[short_name])>1:
+                    samples_list.append([short_name, name, self.dilutions[index], 
+                                         particles_per_frame[index], reliable[index]])
+                else:
+                    samples_list.append(["", name, self.dilutions[index], 
+                                         particles_per_frame[index], reliable[index]])
+                
+                                        
+        self.samples_list = pandas.DataFrame(np.array(samples_list), columns= ["Replicates group", "Sample name", "Dilution", "Particles per frame", "Validity of concentration measurements"])
+            
+        
+        """ Add results for groups of replicates """
+        
+        for i, shorted_name in enumerate(list(self.replicates.keys())):
+            
+            cols_video = [col for col in self.concentration_distributions if "Video" in col and shorted_name in col and "Raw" not in col]
+
+            self.concentration_distributions["Concentration average "+shorted_name] = self.concentration_distributions[cols_video].mean(axis=1)
+            self.concentration_distributions["Standard deviation "+shorted_name] = self.concentration_distributions[cols_video].std(axis=1)# / np.sqrt(len(cols_video))
+                                        
+ 
+ 
+        for i, shorted_name in enumerate(list(self.replicates.keys())):
+
+            
+            replicates_names = self.replicates[shorted_name]
+            
+            if len(replicates_names)==1:
+                continue
+                            
+            results = []
+            cols = []
+            
+            for attribute in ["Concentration", "Mean", "Mode", "SD", "D10", "D50", "D90"]:
+            
+                cols_video = [col for col in self.size_concentration_attributes if "Video" in col and attribute in col]
+                values = self.size_concentration_attributes.loc[replicates_names][cols_video].values.flatten()
+                
+                mean_value = np.mean(values)
+                std_value = np.std(values)
+                
+                results += [mean_value, std_value]
+                cols += [attribute+" Average", attribute+" Std"]
+                
+ 
+            df_short_name = pandas.DataFrame(np.array(results).reshape(1,-1), columns=cols)
+            df_short_name.index = [shorted_name]
+            
+            
+            # if i==0:
+            #     self.size_concentration_attributes_replicates = df_short_name
+            # else:
+            #     self.size_concentration_attributes_replicates = pandas.concat([size_concentration_attributes_replicates, df_short_name], axis=0)
+
+            self.size_concentration_attributes = pandas.concat([self.size_concentration_attributes, df_short_name], axis=0)
+
+
 
     def export_data(self):
 
@@ -178,8 +433,7 @@ class App():
 
         create_missing_dir([resultspath, self.export_dir, "Data export"])
 
-
-        to_save = self.table_concentration_distributions.copy()
+        to_save = self.concentration_distributions.copy()
         
         to_save = to_save[[col for col in to_save if "Raw" not in col]]
         
@@ -202,23 +456,28 @@ class App():
         
         to_save.to_csv(Path(resultspath, self.export_dir, "Data export", "table_size_concentration_distributions.csv"), index=False)
                     
-        sorted_table_concentrations = self.table_total_concentrations.sort_values(by="Average Concentration (Particles / ml)")
-        sorted_table_concentrations["Sample name / Replicate group name"] = sorted_table_concentrations.index
+        # sorted_table_concentrations = self.total_concentrations.sort_values(by="Average Concentration (Particles / ml)")
+        # sorted_table_concentrations["Sample name / Replicate group name"] = sorted_table_concentrations.index
         
         
         
-        sorted_table_concentrations_replicates = self.table_total_concentrations_replicates.sort_values(by="Average Concentration (Particles / ml)")
-        sorted_table_concentrations_replicates["Sample name / Replicate group name"] = sorted_table_concentrations_replicates.index
+        # sorted_table_concentrations_replicates = self.total_concentrations_replicates.sort_values(by="Average Concentration (Particles / ml)")
+        # sorted_table_concentrations_replicates["Sample name / Replicate group name"] = sorted_table_concentrations_replicates.index
                 
         
-        sorted_concat_table_concentrations = pandas.concat([sorted_table_concentrations, sorted_table_concentrations_replicates], axis=0)
+        # sorted_concat_table_concentrations = pandas.concat([sorted_table_concentrations, sorted_table_concentrations_replicates], axis=0)
 
 
-        new_cols_order = ["Sample name / Replicate group name"] + [col for col in sorted_table_concentrations if "Sample name" not in col]
-        sorted_concat_table_concentrations = sorted_concat_table_concentrations[new_cols_order]
-        sorted_concat_table_concentrations.to_csv(Path(resultspath, self.export_dir, "Data export", "table_total_concentrations"), index=False)
+        # new_cols_order = ["Sample name / Replicate group name"] + [col for col in sorted_table_concentrations if "Sample name" not in col]
+        # sorted_concat_table_concentrations = sorted_concat_table_concentrations[new_cols_order]
+        # sorted_concat_table_concentrations.to_csv(Path(resultspath, self.export_dir, "Data export", "total_concentrations"), index=False)
 
-        self.samples_list.to_csv(Path(resultspath, self.export_dir, "Data export", "samples_list.csv"), index=False)
+        self.size_concentration_attributes.to_csv(Path(resultspath, self.export_dir, "Data export", "table_size_concentration_attributes"))
+
+        self.samples_list.to_csv(Path(resultspath, self.export_dir, "Data export", "table_samples_list.csv"), index=False)
+
+        # self.concatenated_sizes["Sample name / Replicate group name"] = self.concatenated_sizes
+        # self.concatenated_sizes.to_csv(Path(results_path, self.export_dir, "Data export", "size_attributes.csv"), index=False)
 
         if not self.manual:    
             self.ok_export = tkinter.Label(self.analysis_frame, text = "Ok", bg=bg_color, fg="orangered")
@@ -233,19 +492,12 @@ class App():
 
         path_to_save = Path(resultspath, self.export_dir)
 
-        if not os.path.exists(resultspath):
-            os.mkdir(Path(resultspath))
-
-        if not os.path.exists(path_to_save):
-            os.mkdir(Path(path_to_save))
-        
-        if not os.path.exists(Path(path_to_save, "distributions_concentrations")):
-            os.mkdir(Path(path_to_save, "distributions_concentrations"))
+        create_missing_dir([resultspath, self.export_dir, "plot_distributions_concentrations"])
 
         for i, name in enumerate(self.name_experiments):
 
-            plot_nanosight_size_distribution(self.table_concentration_distributions, name, save_path_fig = Path(path_to_save, "distributions_concentrations", "nanosight_size_concentration_"+name+".png"))
-            # plot_nanosight_size_densities(self.table_concentration_distributions, name, save_path_fig = Path(path_to_save, "distributions_figures", "nanosight_size_density_"+name+".png"))
+            plot_nanosight_size_distribution(self.concentration_distributions, name, save_path_fig = Path(path_to_save, "plot_distributions_concentrations", "nanosight_size_concentration_"+name+".png"))
+            # plot_nanosight_size_densities(self.concentration_distributions, name, save_path_fig = Path(path_to_save, "distributions_figures", "nanosight_size_density_"+name+".png"))
    
      
    
@@ -255,20 +507,20 @@ class App():
                 continue
             
             
-            cols_video = [col for col in self.table_concentration_distributions if "Video" in col and shorted_name in col and "Raw" not in col]
+            cols_video = [col for col in self.concentration_distributions if "Video" in col and shorted_name in col and "Raw" not in col]
 
-            self.table_concentration_distributions["Concentration average "+shorted_name] = self.table_concentration_distributions[cols_video].mean(axis=1)
-            self.table_concentration_distributions["Standard error "+shorted_name] = self.table_concentration_distributions[cols_video].std(axis=1) / np.sqrt(len(cols_video))
+            self.concentration_distributions["Concentration average "+shorted_name] = self.concentration_distributions[cols_video].mean(axis=1)
+            self.concentration_distributions["Standard error "+shorted_name] = self.concentration_distributions[cols_video].std(axis=1) / np.sqrt(len(cols_video))
 
-            if np.sum([True if "Raw "+col in self.table_concentration_distributions.columns else False for col in cols_video])==len(cols_video):
-                self.table_concentration_distributions["Raw Concentration average "+shorted_name] = self.table_concentration_distributions[["Raw "+col for col in cols_video]].mean(axis=1)
-                self.table_concentration_distributions["Raw Standard error "+shorted_name] = self.table_concentration_distributions[["Raw "+col for col in cols_video]].std(axis=1) / np.sqrt(len(cols_video))
+            if np.sum([True if "Raw "+col in self.concentration_distributions.columns else False for col in cols_video])==len(cols_video):
+                self.concentration_distributions["Raw Concentration average "+shorted_name] = self.concentration_distributions[["Raw "+col for col in cols_video]].mean(axis=1)
+                self.concentration_distributions["Raw Standard error "+shorted_name] = self.concentration_distributions[["Raw "+col for col in cols_video]].std(axis=1) / np.sqrt(len(cols_video))
             
-            plot_nanosight_size_distribution_replicates(self.table_concentration_distributions, shorted_name, replicate_names=self.replicates[shorted_name], save_path_fig = Path(path_to_save, "distributions_concentrations", shorted_name+".png"))
+            plot_nanosight_size_distribution_replicates(self.concentration_distributions, shorted_name, replicate_names=self.replicates[shorted_name], save_path_fig = Path(path_to_save, "plot_distributions_concentrations", shorted_name+".png"))
 
 
         list_names = self.name_experiments
-        list_concentrations = [self.table_total_concentrations["Average Concentration (Particles / ml)"][name] for name in list_names]
+        list_concentrations = [self.size_concentration_attributes.loc[name]["Concentration Average"] for name in list_names]
 
         fig, ax = plt.subplots(1, figsize=(20,15))
         
@@ -280,25 +532,26 @@ class App():
         ax.set_xticks(np.arange(len(ordered_list_concentrations)))
         ax.set_xticklabels(ordered_name_exp, fontsize=18, rotation=45, rotation_mode="anchor", ha="right")
         fig.tight_layout()
-        fig.savefig(Path(path_to_save, "distributions_concentrations", "concentrations.pdf"))
+        fig.savefig(Path(path_to_save, "plot_distributions_concentrations", "concentrations.pdf"))
         
+        if self.replicates_exist:
 
-        fig, ax = plt.subplots(1, figsize=(20,15))
+            fig, ax = plt.subplots(1, figsize=(20,15))
+        
+            list_names = list(self.replicates.keys())
+            list_concentrations = [self.size_concentration_attributes.loc[name]["Concentration Average"] for name in list_names]
+            ordered_list_index = np.array(list_concentrations).argsort()
     
-        list_names = list(self.replicates.keys())
-        list_concentrations = [self.table_total_concentrations_replicates["Average Concentration (Particles / ml)"][name] for name in list_names]
-        ordered_list_index = np.array(list_concentrations).argsort()
-
-        ordered_list_concentrations = np.array(list_concentrations)[ordered_list_index]
-        ordered_name_exp = np.array(list_names)[ordered_list_index]
-        ax.bar(x=np.arange(len(ordered_list_concentrations)), height=ordered_list_concentrations)#, color=ordered_colors)#, labels=ordered_name_exp)#, marker=".", s=30)
-        ax.set_xticks(np.arange(len(ordered_list_concentrations)))
-        ax.set_xticklabels(ordered_name_exp, fontsize=18, rotation=45, rotation_mode="anchor", ha="right")
-        fig.tight_layout()
-        fig.savefig(Path(path_to_save, "distributions_concentrations", "concentrations_grouped_by_replicates.pdf"))
-
-                
-        
+            ordered_list_concentrations = np.array(list_concentrations)[ordered_list_index]
+            ordered_name_exp = np.array(list_names)[ordered_list_index]
+            ax.bar(x=np.arange(len(ordered_list_concentrations)), height=ordered_list_concentrations)#, color=ordered_colors)#, labels=ordered_name_exp)#, marker=".", s=30)
+            ax.set_xticks(np.arange(len(ordered_list_concentrations)))
+            ax.set_xticklabels(ordered_name_exp, fontsize=18, rotation=45, rotation_mode="anchor", ha="right")
+            fig.tight_layout()
+            fig.savefig(Path(path_to_save, "plot_distributions_concentrations", "concentrations_grouped_by_replicates.pdf"))
+    
+                    
+            
 
 
         if not self.manual:    
@@ -310,221 +563,6 @@ class App():
         
         self.group_replicates = self.group_replicates_tkinter_var.get()
 
-    def load_nanosight(self):
-
-        
-
-        
-        if not self.manual:
-
-            if hasattr(self, 'list_experiments_frame'):
-                self.list_experiments_frame.destroy()
-    
-            if hasattr(self, 'analysis_frame'):
-                self.analysis_frame.destroy()
-                
-            if hasattr(self, "data_correctly_loaded"):
-                self.data_correctly_loaded.destroy()
-                
-            self.dilution_prefix = self.dilution_prefix_tkinter_var.get()
-            self.autosampler = self.autosampler_tkinter_var.get()
-            self.replicate_prefix = self.replicate_prefix_tkinter_var.get()
-     
-
-
-        if self.data_dir is not None:
-            
-            self.name_experiments, self.table_concentration_distributions, self.table_total_concentrations, self.dilutions, self.reliable_results = extract_nanosight_experiment_measures(Path(datapath, self.data_dir), 
-                                                                                                                                            dilution_prefix=self.dilution_prefix, 
-                                                                                                                                            autosampler=self.autosampler) 
-
-            self.particles_per_frame = [", ".join(["%.1f"%(self.reliable_results.loc[name]["Video "+str(k)]) for k in range(1,6)]) for name in self.name_experiments]
-
-            self.replicates = get_replicates(self.name_experiments, replicate_prefix = self.replicate_prefix)
-            
-            self.replicates_exist = np.sum([len(v)>1 for k,v in self.replicates.items()])
-            
-            if not self.manual :
-                self.data_correctly_loaded = tkinter.Label(self.load_data_frame, text = "Data correctly loaded", bg=bg_color, fg="orangered")
-                self.data_correctly_loaded.grid(row=7, columnspan=3, column=0, pady=10*ratio_pady)
-
-                
-                self.list_experiments_frame = tkinter.LabelFrame(self.root, text="List of samples", font = TkFont.Font(weight="bold"), bg=bg_color)
-                self.list_experiments_frame.grid(row=0, column=1, sticky='news', padx=40*ratio_padx, pady=20*ratio_pady)
-
-                frame_canvas = tkinter.Frame(self.list_experiments_frame)
-                frame_canvas.grid(row=2, column=0, pady=(5, 0), sticky='nw')
-                frame_canvas.grid_rowconfigure(0, weight=1)
-                frame_canvas.grid_columnconfigure(0, weight=1)
-                # Set grid_propagate to False to allow 5-by-5 buttons resizing later
-                frame_canvas.grid_propagate(False)
-                
-                # Add a canvas in that frame
-                canvas = tkinter.Canvas(frame_canvas, bg="yellow")
-                canvas.grid(row=0, column=0, sticky="news")
-                
-                # Link a scrollbar to the canvas
-                vsb = tkinter.Scrollbar(frame_canvas, orient="vertical", command=canvas.yview)
-                vsb.grid(row=0, column=3, sticky='ns', rowspan=len(self.name_experiments)+1)
-                canvas.config(yscrollcommand=vsb.set, bg=bg_color)
-                
-                # Create a frame to contain the buttons
-                frame_buttons = tkinter.Frame(canvas, bg=bg_color)
-                canvas.create_window((0, 0), window=frame_buttons, anchor='nw')
-
-
-                # Set the canvas scrolling region
-                canvas.config(scrollregion=canvas.bbox("all"))
-                
-
-                max_display = 30
-
-                samples_list = []
-
-                names_title = tkinter.Label(frame_buttons, text = "Name", bg=bg_color, fg="black")
-                names_title.grid(row=0, column=0, pady=40*ratio_pady)
-                
-                dilutions_title = tkinter.Label(frame_buttons, text = "Dilution", bg=bg_color, fg="black")
-                dilutions_title.grid(row=0, column=1, pady=40*ratio_pady, padx=30*ratio_padx)
-
-                particles_per_frame_title = tkinter.Label(frame_buttons, text = "Particles per frame", bg=bg_color, fg="black")
-                particles_per_frame_title.grid(row=0, column=2, pady=40*ratio_pady, padx=30*ratio_padx)
-
-
-
-                
-                # for i in range(len(self.name_experiments)):
-                #     name = self.name_experiments[i]
-                #     dilution = self.dilutions[i]
-                #     particles_per_frame = self.particles_per_frame[i]
-
-                #     samples_list.append([name, dilution, particles_per_frame])
-  
-                #     name_label = tkinter.Label(frame_buttons, text = name, bg=bg_color, fg="black")
-                #     name_label.grid(row=1+i, column=0, pady=2*ratio_pady)
-                    
-                #     dilution_label = tkinter.Label(frame_buttons, text = str(dilution), bg=bg_color, fg="black")
-                #     dilution_label.grid(row=1+i, column=1, pady=2*ratio_pady, padx=30*ratio_padx)
-
-                #     particle_per_frame_label = tkinter.Label(frame_buttons, text = particles_per_frame, bg=bg_color, fg="black")
-                #     particle_per_frame_label.grid(row=1+i, column=2, pady=2*ratio_pady, padx=30*ratio_padx)
-                    
-
-                
-                for k in range(len(self.replicates)):
-                    
-                    short_name = list(self.replicates.keys())[k]
-                    exp = self.replicates[short_name]
-
-                    for j in range(len(exp)):
-                                                                    
-                        name = exp[j]
-                        index = self.name_experiments.index(name)
-                        dilution = self.dilutions[index]
-                        particles_per_frame = self.particles_per_frame[index]
-    
-    
-                        if len(self.replicates[short_name])>1:
-                            samples_list.append([short_name, name, dilution, particles_per_frame])
-                        else:
-                            samples_list.append(["", name, dilution, particles_per_frame])
-
-                        name_label = tkinter.Label(frame_buttons, text = name, bg=bg_color, fg="black")
-                        name_label.grid(row=1+index+k, column=0, pady=2*ratio_pady)
-                        
-                        dilution_label = tkinter.Label(frame_buttons, text = str(dilution), bg=bg_color, fg="black")
-                        dilution_label.grid(row=1+index+k, column=1, pady=2*ratio_pady, padx=30*ratio_padx)
-    
-                        particle_per_frame_label = tkinter.Label(frame_buttons, text = particles_per_frame, bg=bg_color, fg="black")
-                        particle_per_frame_label.grid(row=1+index+k, column=2, pady=2*ratio_pady, padx=30*ratio_padx)
-                        
-                        
-                        if j == len(exp)-1:
-                            
-                            space = tkinter.Label(frame_buttons, text="", bg=bg_color)
-                            space.grid(row = 2+index+k, column=2, pady=2*ratio_pady, padx=30*ratio_padx)
-                            
-                            
-
-                    
-                        
-                                            
-                    
-
-                        
-                frame_buttons.update_idletasks()
-
-                
-                width2 = frame_buttons.winfo_reqwidth() 
-                height2 = frame_buttons.winfo_reqheight()
-                
-                
-                ratio = 0.8
-                
-                frame_canvas.config(width=width2 , height=min(height2, ratio*self.screen_height))
-                canvas.config(scrollregion=canvas.bbox("all"))
-                
-                                
-                   
-           
-                self.samples_list = pandas.DataFrame(np.array(samples_list), columns= ["Replicates group", "Sample name", "Dilution", "Particles per frame"])
-                
-                               
-                self.analysis_frame = tkinter.LabelFrame(self.root, text="Analysis", font = TkFont.Font(weight="bold"))
-                self.analysis_frame.configure(background=bg_color)
-                self.analysis_frame.grid(row = 0, column = 2, sticky="N", padx=20*ratio_padx, pady=20*ratio_pady)
-    
-                button_export = tkinter.Button(self.analysis_frame, text = "Export data" , command = self.export_data, bg="white", fg="black")
-                button_export.grid(row=1, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
-                
-                button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Plot distributions and concentrations" , command = self.plot_nanosight, bg="white", fg="black")
-                button_launch_analysis.grid(row=2, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
-                
-                
-                start = 3
-                
-
-                if self.replicates_exist:
-                    check_group_replicates = tkinter.Checkbutton(self.analysis_frame, text="Group replicates", variable=self.group_replicates_tkinter_var, command=self.set_group_replicates, bg=bg_color)
-                    check_group_replicates.grid(column=0, row=4, pady=40*ratio_pady)
-                    start = 5
-
-                button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Clustering normalized distributions" , command = self.run_clustering_normalized_nanosight_size_concentration_distributions_wasserstein, bg="white", fg="black")
-                button_launch_analysis.grid(row=start, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
-                
-                button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Clustering total concentrations" , command = self.run_clustering_total_concentration_nanosight, bg="white", fg="black")
-                button_launch_analysis.grid(row=start+1, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
-                       
-                button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Statistical test between normalized distributions" , command = self.plot_nanosight_kolmogorov_test_matrix, bg="white", fg="black")
-                button_launch_analysis.grid(row=start+2, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
-                
-                
-            results = []
-                        
-            for i, shorted_name in enumerate(list(self.replicates.keys())):
-                
-                cols_video = [col for col in self.table_concentration_distributions if "Video" in col and shorted_name in col and "Raw" not in col]
-    
-                self.table_concentration_distributions["Concentration average "+shorted_name] = self.table_concentration_distributions[cols_video].mean(axis=1)
-                self.table_concentration_distributions["Standard deviation "+shorted_name] = self.table_concentration_distributions[cols_video].std(axis=1)# / np.sqrt(len(cols_video))
-                
-                
-                subtable_concentration = self.table_total_concentrations.loc[[col for col in self.table_total_concentrations.index if shorted_name in col]]
-                subtable_concentration = subtable_concentration[[col for col in subtable_concentration.columns if "Video" in col]]
-
-                
-                subtable_concentration_mean = subtable_concentration.mean(axis=1).mean()
-                
-                subtable_concentration_std = subtable_concentration.std(axis=1).std()
-                
-                
-                results.append([subtable_concentration_mean, subtable_concentration_std])
-                
-                
-            self.table_total_concentrations_replicates = pandas.DataFrame(np.array(results), index=list(self.replicates.keys()), columns=["Average Concentration (Particles / ml)", "Standard Deviation" ])
-            
-                                            
-                
 
 
                 
@@ -547,8 +585,8 @@ class App():
         
         cols_concentration = ["Concentration average "+name for name in list_names]
 
-        list_distribs = [self.table_concentration_distributions[col] for col in cols_concentration]
-        bin_centers = self.table_concentration_distributions["Bin centre (nm)"].values
+        list_distribs = [self.concentration_distributions[col] for col in cols_concentration]
+        bin_centers = self.concentration_distributions["Bin centre (nm)"].values
         
         fig, ax = plt.subplots(1)
 
@@ -606,8 +644,8 @@ class App():
         
 
         cols_concentration = ["Concentration average "+name for name in list_names]
-        list_distribs = [self.table_concentration_distributions[col] for col in cols_concentration]
-        bin_centers = self.table_concentration_distributions["Bin centre (nm)"].values
+        list_distribs = [self.concentration_distributions[col] for col in cols_concentration]
+        bin_centers = self.concentration_distributions["Bin centre (nm)"].values
 
         distance_matrix_dataframe = compute_test_diff_matrix_distribs(list_distribs, bin_centers, test=test, normalized=True, list_names=list_names)
                 
@@ -646,14 +684,13 @@ class App():
             list_names = list(self.replicates.keys())
             
             
-            list_concentrations = [self.table_total_concentrations_replicates["Average Concentration (Particles / ml)"][name] for name in list_names]
+            list_concentrations = [self.total_concentrations_replicates["Average Concentration (Particles / ml)"][name] for name in list_names]
             
             
         else:
             list_names = self.name_experiments
         
-
-            list_concentrations = [self.table_total_concentrations["Average Concentration (Particles / ml)"][name] for name in list_names]
+            list_concentrations = [self.size_concentration_attributes.loc[name]["Concentration Average"] for name in list_names]
 
         distance_matrix_dataframe = compute_distance_matrix(list_concentrations, distance="euclidean", list_names=list_names)
 
@@ -709,15 +746,15 @@ class App():
 
         
         cols_concentration = ["Concentration average "+name for name in self.name_experiments]
-        list_distribs = [self.table_concentration_distributions[col] for col in cols_concentration]
-        bin_centers = self.table_concentration_distributions["Bin centre (nm)"].values
+        list_distribs = [self.concentration_distributions[col] for col in cols_concentration]
+        bin_centers = self.concentration_distributions["Bin centre (nm)"].values
         bin_diffs = np.array([bin_centers[0]*2] + list(bin_centers[1:] - bin_centers[:-1]))
         bins =  [0] + list(bin_centers + bin_diffs/2)
         
         list_area = [np.sum(distrib * bin_diffs) for distrib in list_distribs]
         normalized_distribs = [distrib / list_area[u] for u, distrib in enumerate(list_distribs)]
  
-        list_concentrations = self.table_total_concentrations["Average Concentration (Particles / ml)"].values
+        list_concentrations = self.total_concentrations["Average Concentration (Particles / ml)"].values
            
 
         
@@ -755,10 +792,10 @@ class App():
 
         
         cols_concentration = ["Concentration average "+name for name in self.name_experiments]
-        list_distribs = [self.table_concentration_distributions[col] for col in cols_concentration]
-        bin_centers = self.table_concentration_distributions["Bin centre (nm)"].values
+        list_distribs = [self.concentration_distributions[col] for col in cols_concentration]
+        bin_centers = self.concentration_distributions["Bin centre (nm)"].values
 
-        list_concentrations = [self.table_total_concentrations["Average Concentration (Particles / ml)"][name] for name in self.name_experiments]
+        list_concentrations = [self.total_concentrations["Average Concentration (Particles / ml)"][name] for name in self.name_experiments]
 
         distance_matrix_dataframe = compute_distance_matrix_mixte_wasserstein_euclidean(list_distribs, bin_centers, list_concentrations, list_names=self.videodrop_name_experiments)
 

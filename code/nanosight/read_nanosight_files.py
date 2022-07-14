@@ -52,7 +52,7 @@ def read_experiment_summary_file(filepath, autosampler=False):
     
         if not autosampler:
     
-            table = pandas.read_csv(filepath, skiprows=start_index, sep=",", encoding = "ISO-8859-1", 
+            results_distributions = pandas.read_csv(filepath, skiprows=start_index, sep=",", encoding = "ISO-8859-1", 
                                 header=0, usecols=range(8)) 
     
             details_experiment = pandas.read_csv(filepath, sep=",", usecols=range(2), encoding = "ISO-8859-1")
@@ -61,7 +61,7 @@ def read_experiment_summary_file(filepath, autosampler=False):
  
         else:
             
-            table = pandas.read_csv(filepath, skiprows=start_index, sep=",", encoding = "ISO-8859-1", 
+            results_distributions = pandas.read_csv(filepath, skiprows=start_index, sep=",", encoding = "ISO-8859-1", 
                                 header=0, usecols=range(3)) 
 
             details_experiment = pandas.read_csv(filepath, sep=",", usecols=range(2), encoding = "ISO-8859-1")
@@ -76,64 +76,65 @@ def read_experiment_summary_file(filepath, autosampler=False):
         results_concentration.drop("key", axis=1, inplace=True)
         results_concentration = results_concentration.astype(float)
         
+        
+        results_concentration.rename(columns={"Video "+str(k): "Concentration Video "+str(k) for k in range(1, 6)}, inplace=True)
+        
 
-        concentration_average = results_concentration.mean(axis=1).values[0]
-        concentration_std = results_concentration.std(axis=1).values[0]
-        results_concentration["Average Concentration (Particles / ml)"] = concentration_average
+        for i in range(len(results_distributions)):
         
-        results_concentration["Standard Deviation"] = concentration_std         
+            
+            if str(results_distributions.iloc[i]["Bin centre (nm)"])=="Percentile" or str(results_distributions.iloc[i]["Bin centre (nm)"])=="nan":
+                
+                results_distributions = results_distributions.iloc[:i]
+                break
+    
+        results_distributions = results_distributions.astype(float)
+    
+        ### Rename columns  
+        cols_videos = [col for col in results_distributions.columns if "Concentration (particles / ml)" in col]
+        results_distributions = results_distributions[["Bin centre (nm)", "Concentration average", "Standard Error"] + cols_videos]
+        new_names_cols_videos = ["Concentration (particles / ml) Video "+str(j+1) for j in range(len(cols_videos))]
+        results_distributions.columns = ["Bin centre (nm)", "Concentration average", "Standard error"] + new_names_cols_videos 
         
+        name_details = np.array(results)[:,0]
+     
+        where_particles_per_frame = (name_details == "Particles per frame")
+        
+        infos_particles_per_frame = results[where_particles_per_frame].values[0]
+        
+        where_validity = (name_details == "Validity of concentration measurement")
+        infos_validity = results[where_validity].values[0]
+    
+      
+            
+        where_key = ((results["key"]=="Validity of concentration measurement") | (results["key"]=="Particles per frame"))
+        results_reliable = pandas.DataFrame(results[where_key].iloc[:2,:])
+        results_reliable.reset_index(inplace=True, drop=True)
+        
+    
+        index_size = np.where(results["key"]=="[Size Data]")[0][0]
+        size_results = results[index_size:]
+        
+        index_size = np.where(results["key"]=="[Size Data]")[0][0]
+        index_end_size = np.where(results["key"]=="Graph Data")[0][0]
+    
+        size_results = results[index_size:index_end_size]
+        where_key = ((size_results["key"]=="Mean") | (size_results["key"]=="Mode") | (size_results["key"]=="SD") | (size_results["key"]=="D10") | (size_results["key"]=="D50") | (size_results["key"]=="D90"))
+    
+        results_size = pandas.DataFrame(size_results[where_key])
+        index = results_size["key"]
+        results_size.drop("key", axis=1, inplace=True)
+            
+        results_size.index = np.array(index)
+        results_size = results_size.astype(float)
+
+
     except:
         raise ValueError("Error when reading file", filepath)
         
 
-    for i in range(len(table)):
-    
-        
-        if str(table.iloc[i]["Bin centre (nm)"])=="Percentile" or str(table.iloc[i]["Bin centre (nm)"])=="nan":
-            
-            table = table.iloc[:i]
-            break
+    return results_distributions, results_concentration, results_reliable, results_size
 
-    table = table.astype(float)
-
-    ### Rename columns  
-    cols_videos = [col for col in table.columns if "Concentration (particles / ml)" in col]
-    table = table[["Bin centre (nm)", "Concentration average", "Standard Error"] + cols_videos]
-    new_names_cols_videos = ["Concentration (particles / ml) Video "+str(j+1) for j in range(len(cols_videos))]
-    table.columns = ["Bin centre (nm)", "Concentration average", "Standard error"] + new_names_cols_videos 
-    
-    name_details = np.array(results)[:,0]
- 
-    where_particles_per_frame = (name_details == "Particles per frame")
-    
-    infos_particles_per_frame = results[where_particles_per_frame].values[0]
-    
-    where_validity = (name_details == "Validity of concentration measurement")
-    infos_validity = results[where_validity].values[0]
-
-  
-        
-    where_key = ((results["key"]=="Validity of concentration measurement") | (results["key"]=="Particles per frame"))
-    results_reliable = pandas.DataFrame(results[where_key].iloc[:2,:])
-    results_reliable.reset_index(inplace=True)
-    results_reliable.drop("index", axis=1, inplace=True)
-    results_reliable.drop("key", axis=1, inplace=True)
-        
-    infos_validity = results_reliable.iloc[1,:].values
-
-
-    results_reliable = pandas.DataFrame(results_reliable.iloc[:1,:]).astype(float)
-    
-    if np.sum(results_reliable.iloc[0,:]<30) > 0:
-        reliable = "unreliable"
-    else:
-        reliable = "reliable"
-
-    results_reliable["Average particles per frame"] = results_reliable.mean(axis=1)
-    results_reliable.loc[:,"Is reliable"] = reliable
-
-    return table, results_concentration, results_reliable
 
 
 

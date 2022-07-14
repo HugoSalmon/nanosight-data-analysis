@@ -20,9 +20,9 @@ def extract_nanosight_experiment_measures(directory_path, autosampler=False, dil
     sorted_name_experiments = sorted(list(files_dic.keys()))
         
     dilutions = []
-    
-    for i, name_experiment in enumerate(sorted_name_experiments):
         
+    for i, name_experiment in enumerate(sorted_name_experiments):
+
         try:
             splitted = name_experiment.split(" ")
             dilution_string = [s for s in splitted if dilution_prefix in s][-1]
@@ -37,72 +37,119 @@ def extract_nanosight_experiment_measures(directory_path, autosampler=False, dil
             
                 
         experiment_summary_file = files_dic[name_experiment]["experiment_summary_file"]    
-        experiment_summary_table, results_concentration, results_reliable = read_experiment_summary_file(Path(directory_path, experiment_summary_file), autosampler=autosampler)
+        results_distributions, results_concentrations, results_reliable, results_size = read_experiment_summary_file(Path(directory_path, experiment_summary_file), autosampler=autosampler)
         
-        bin_centers.append(experiment_summary_table["Bin centre (nm)"].values)
+        bin_centers.append(results_distributions["Bin centre (nm)"].values)
 
 
-        for col in [col for col in experiment_summary_table.columns if col!="Bin centre (nm)"]:
-            experiment_summary_table[col] = experiment_summary_table[col] * dilution_factor
+        for col in [col for col in results_distributions.columns if col!="Bin centre (nm)"]:
+            results_distributions[col] = results_distributions[col] * dilution_factor
 
-        experiment_summary_table.columns = [col+" "+name_experiment if col!="Bin centre (nm)" else col for col in experiment_summary_table.columns]
+        results_distributions.columns = [col+" "+name_experiment if col!="Bin centre (nm)" else col for col in results_distributions.columns]
 
-        results_concentration = results_concentration * dilution_factor
+        results_concentrations = results_concentrations * dilution_factor
+        
+    
+        results_concentrations.insert(0, "Concentration Average", results_concentrations.mean(axis=1).values[0])
+        results_concentrations.insert(1, "Concentration Std", results_concentrations.std(axis=1).values[0])      
+        
+
                 
         if not autosampler:
-#            experiment_summary_table.columns = [col.replace("Concentration (particles / ml)", "Concentration " for col in experiment_summary_table.columns]
-            cols_videos = [col for col in experiment_summary_table if "Video" in col]    
-            u = experiment_summary_table[cols_videos].std(axis=1)
-            experiment_summary_table["Standard error "+name_experiment] = u  / np.sqrt(len(cols_videos))
-            experiment_summary_table["Standard deviation "+name_experiment] = u
+            cols_videos = [col for col in results_distributions if "Video" in col]    
+            u = results_distributions[cols_videos].std(axis=1)
+            results_distributions["Standard error "+name_experiment] = u  / np.sqrt(len(cols_videos))
+            results_distributions["Standard deviation "+name_experiment] = u
 
 
 
-        ### Raw data
+        # ### Raw data
 
-        if files_dic[name_experiment]["experiment_summary_raw_file"] is not None:   
+        # if files_dic[name_experiment]["experiment_summary_raw_file"] is not None:   
 
-            raw_experiment_summary_file = files_dic[name_experiment]["experiment_summary_raw_file"]    
-            raw_experiment_summary_table, data_infos, results_reliable = read_experiment_summary_file(Path(directory_path, raw_experiment_summary_file), autosampler=autosampler)
-            bin_centers.append(raw_experiment_summary_table["Bin centre (nm)"].values)
+        #     raw_experiment_summary_file = files_dic[name_experiment]["experiment_summary_raw_file"]    
+        #     raw_experiment_summary_table, data_infos, results_reliable = read_experiment_summary_file(Path(directory_path, raw_experiment_summary_file), autosampler=autosampler)
+        #     bin_centers.append(raw_experiment_summary_table["Bin centre (nm)"].values)
 
-            for col in [col for col in raw_experiment_summary_table.columns if col!="Bin centre (nm)"]:
-                raw_experiment_summary_table[col] = raw_experiment_summary_table[col] * dilution_factor
+        #     for col in [col for col in raw_experiment_summary_table.columns if col!="Bin centre (nm)"]:
+        #         raw_experiment_summary_table[col] = raw_experiment_summary_table[col] * dilution_factor
     
-            raw_experiment_summary_table.columns = ["Raw "+col+" "+name_experiment if col!="Bin centre (nm)" else col for col in raw_experiment_summary_table.columns]
+        #     raw_experiment_summary_table.columns = ["Raw "+col+" "+name_experiment if col!="Bin centre (nm)" else col for col in raw_experiment_summary_table.columns]
             
-            if not autosampler:
-                cols_videos = [col for col in raw_experiment_summary_table if "Video" in col]
-                u = raw_experiment_summary_table[cols_videos].std(axis=1) 
-                raw_experiment_summary_table["Raw Standard error "+name_experiment] = u  / np.sqrt(len(cols_videos))
-                raw_experiment_summary_table["Raw Standard deviation "+name_experiment] = u   
+        #     if not autosampler:
+        #         cols_videos = [col for col in raw_experiment_summary_table if "Video" in col]
+        #         u = raw_experiment_summary_table[cols_videos].std(axis=1) 
+        #         raw_experiment_summary_table["Raw Standard error "+name_experiment] = u  / np.sqrt(len(cols_videos))
+        #         raw_experiment_summary_table["Raw Standard deviation "+name_experiment] = u   
 
-            raw_experiment_summary_table.drop("Bin centre (nm)", axis=1, inplace=True)
-            experiment_summary_table = pandas.concat([experiment_summary_table, raw_experiment_summary_table], axis=1)                        
+        #     raw_experiment_summary_table.drop("Bin centre (nm)", axis=1, inplace=True)
+        #     experiment_summary_table = pandas.concat([experiment_summary_table, raw_experiment_summary_table], axis=1)                        
+
+
 
         if i==0:
-            concatenated_results = experiment_summary_table
+            concatenated_distributions = results_distributions.copy()
         else:
-            experiment_summary_table.drop("Bin centre (nm)", axis=1, inplace=True)
-            concatenated_results = pandas.concat([concatenated_results, experiment_summary_table], axis=1)
+            results_distributions.drop("Bin centre (nm)", axis=1, inplace=True)
+            concatenated_distributions = pandas.concat([concatenated_distributions, results_distributions], axis=1)
 
 
-        results_concentration.index = [name_experiment]
+        results_concentrations.index = [name_experiment]
         if i==0:
             
-            concatenated_results_concentration = results_concentration
+            concatenated_concentrations = results_concentrations.copy()
         else:
-            concatenated_results_concentration = pandas.concat([concatenated_results_concentration, results_concentration], axis=0)
+            concatenated_concentrations = pandas.concat([concatenated_concentrations, results_concentrations], axis=0)
 
-        results_reliable.index = [name_experiment]
-        if i==0:
+
+
+        results_reliable.drop("key", axis=1, inplace=True)
             
-            concatenated_results_reliable = results_reliable
+        validity = pandas.DataFrame(results_reliable.iloc[[1],:])
+        particles_per_frame = pandas.DataFrame(results_reliable.iloc[:1,:]).astype(float)
+                
+        validity.index = [name_experiment]
+        particles_per_frame.index = [name_experiment]
+        
+        
+        if i==0: 
+            concatenated_particles_per_frame = particles_per_frame.copy()
         else:
-            concatenated_results_reliable = pandas.concat([concatenated_results_reliable, results_reliable], axis=0)
+            concatenated_particles_per_frame = pandas.concat([concatenated_particles_per_frame, particles_per_frame], axis=0)
         
+        if i==0:
+            concatenated_validity = validity
+        else:
+            concatenated_validity = pandas.concat([concatenated_validity, validity], axis=0)
         
+
+        for k, index in enumerate(results_size.index):
+            
+            
+            res = [results_size.loc[index, col] for col in results_size.columns]
+
+            new_df = pandas.DataFrame(np.array(res).reshape(1,-1), columns = [index+" "+col for col in results_size.columns])
+                        
+            new_df.insert(0, index+" Average", np.mean(res))
+            new_df.insert(1, index+" Std", np.std(res))
+
+
+            if k==0:
+                
+                new_results_size = new_df
+            else:
+                new_results_size = pandas.concat([new_results_size, new_df], axis=1)
+
+        new_results_size.index = [name_experiment]
+
         
+        if i==0:
+            concatenated_sizes = new_results_size.copy()
+        else:
+            concatenated_sizes = pandas.concat([concatenated_sizes, new_results_size], axis=0)
+            
+                                                
+                
     ##verif equal bins
     for i, j in list(itertools.combinations(np.arange(len(bin_centers)), 2)):
         
@@ -114,11 +161,12 @@ def extract_nanosight_experiment_measures(directory_path, autosampler=False, dil
     
     
     if not keep_videos:
-        for col in [col for col in concatenated_results.columns if "Video" in col]:
-            concatenated_results.drop(col, axis=1, inplace=True)
+        for col in [col for col in concatenated_results_distributions.columns if "Video" in col]:
+            concatenated_results_distributions.drop(col, axis=1, inplace=True)
+            
             
     
-    return sorted_name_experiments, concatenated_results, concatenated_results_concentration, dilutions, concatenated_results_reliable
+    return sorted_name_experiments, concatenated_distributions, concatenated_concentrations, dilutions, concatenated_particles_per_frame, concatenated_validity, concatenated_sizes
 
 
 
