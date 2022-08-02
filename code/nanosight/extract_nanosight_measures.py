@@ -35,31 +35,33 @@ def extract_nanosight_experiment_measures(directory_path, autosampler=False, dil
             dilution_factor = 1
             dilutions.append("Not found")
             
+            
                 
         experiment_summary_file = files_dic[name_experiment]["experiment_summary_file"]    
         results_distributions, results_concentrations, results_reliable, results_size = read_experiment_summary_file(Path(directory_path, experiment_summary_file), autosampler=autosampler)
+ 
+    
         
         bin_centers.append(results_distributions["Bin centre (nm)"].values)
 
-
-        for col in [col for col in results_distributions.columns if col!="Bin centre (nm)"]:
-            results_distributions[col] = results_distributions[col] * dilution_factor
+        for col in [column for column in results_distributions.columns if "Bin centre" not in column]:
+            results_distributions[col] = results_distributions[col] * dilution_factor        
 
         results_distributions.columns = [col+" "+name_experiment if col!="Bin centre (nm)" else col for col in results_distributions.columns]
 
-        results_concentrations = results_concentrations * dilution_factor
-        
-    
+
+
+
+
         results_concentrations.insert(0, "Concentration Average", results_concentrations.mean(axis=1).values[0])
         results_concentrations.insert(1, "Concentration Std", results_concentrations.std(axis=1).values[0])      
         
-
                 
-        if not autosampler:
-            cols_videos = [col for col in results_distributions if "Video" in col]    
-            u = results_distributions[cols_videos].std(axis=1)
-            results_distributions["Standard error "+name_experiment] = u  / np.sqrt(len(cols_videos))
-            results_distributions["Standard deviation "+name_experiment] = u
+        # if not autosampler:
+        #     cols_videos = [col for col in results_distributions if "Video" in col]    
+        #     u = results_distributions[cols_videos].std(axis=1)
+        #     results_distributions["Standard error "+name_experiment] = u  / np.sqrt(len(cols_videos))
+        #     results_distributions["Standard deviation "+name_experiment] = u
 
 
 
@@ -90,8 +92,7 @@ def extract_nanosight_experiment_measures(directory_path, autosampler=False, dil
         if i==0:
             concatenated_distributions = results_distributions.copy()
         else:
-            results_distributions.drop("Bin centre (nm)", axis=1, inplace=True)
-            concatenated_distributions = pandas.concat([concatenated_distributions, results_distributions], axis=1)
+            concatenated_distributions = pandas.merge(concatenated_distributions, results_distributions, on="Bin centre (nm)", how="inner")
 
 
         results_concentrations.index = [name_experiment]

@@ -4,6 +4,7 @@ plt.rcParams["font.family"] = "serif"
   
 
 
+from scipy.integrate import simpson
 
 
 
@@ -145,34 +146,46 @@ def plot_nanosight_size_distribution(concatenated_results, name, save_path_fig):
 
 
 
-def plot_all_conds_nanosight(results_table, dic_exp, list_conds, total_concentrations, reliable_results,
+def plot_all_conds_nanosight(results_table, dic_exp, list_conds, total_concentrations,
                               colors_time=None, lim_left=None, 
-                              lim_right=None, savepath=None, raw=False):
+                              lim_right=None, savepath=None):
+
 
     fig, ax = plt.subplots(len(list_conds),2, figsize=(25,15), sharex=True, sharey=False)
+    
+    colors = ["cyan", "dodgerblue", "darkblue", "orange", "tomato", "darkred"]    + ["cyan", "dodgerblue", "darkblue", "orange", "tomato", "darkred"]  + ["cyan", "dodgerblue", "darkblue", "orange", "tomato", "darkred"]  + ["cyan", "dodgerblue", "darkblue", "orange", "tomato", "darkred"]  
+
 
     bin_centers = results_table["Bin centre (nm)"].values
     bin_diffs = np.array([bin_centers[0]*2] + list(bin_centers[1:] - bin_centers[:-1]))
     bins =  [0] + list(bin_centers + bin_diffs/2)
         
     for i, key in enumerate(list_conds):
-
+        
         for n, name in enumerate(dic_exp[key]):
             
-            if raw:
-                concentration = results_table["Raw Concentration average "+name].values
-            else:
-                concentration = results_table["Concentration average "+name].values
+            
+            concentration = results_table["Concentration average "+name].values
 
-            area = np.sum(concentration * bin_diffs)
+            # area = np.sum(concentration * bin_diffs)
+            area = simpson(x=bin_centers, y=concentration)
+
             normalized_concentration = concentration / area
-            c_totale = total_concentrations.loc[name]["Average Concentration (Particles / ml)"]
-            reliable = reliable_results.loc[name]["Is reliable"]
+            c_totale = total_concentrations.loc[name]["Concentration Average"]
+            # reliable = reliable_results.loc[name]["Is reliable"]
+            
+            if colors_time is not None:
+                color = colors_time[n]
+                
+            else:
+                color=colors[n]
 
-            ax[i,0].plot(bin_centers, concentration, color=colors_time[n], label=name + " C=%.2e"%c_totale + " -"+reliable)  
-            ax[i,1].plot(bin_centers, normalized_concentration, color=colors_time[n], label=name+" (normalized)" + " -"+reliable)  
+            ax[i,0].plot(bin_centers, concentration, color=color, label=name + " C=%.2e"%c_totale)  
+            ax[i,1].plot(bin_centers, normalized_concentration, color=color, label=name+" (normalized)")  
+
 
     for i in range(len(list_conds)):
+        
         if lim_left is not None:
             ax[i,0].set_xlim(left=lim_left)
         if lim_right is not None:
@@ -181,10 +194,7 @@ def plot_all_conds_nanosight(results_table, dic_exp, list_conds, total_concentra
         ax[i,0].legend(fontsize=13, loc="upper right")
         ax[i,1].legend(fontsize=13, loc="upper right")
 
-        if raw:
-            ax[i,0].set_ylabel("Raw Concentration (Particles/ml)", fontsize=13)
-        else:
-            ax[i,0].set_ylabel("Concentration (Particles/ml)", fontsize=13)
+        ax[i,0].set_ylabel("Concentration (Particles/ml)", fontsize=13)
             
         ax[i,0].tick_params(labelsize=13)
         ax[i,1].tick_params(labelsize=13)
@@ -210,6 +220,9 @@ def plot_all_conds_nanosight(results_table, dic_exp, list_conds, total_concentra
     
     if savepath is not None:
         fig.savefig(savepath)  
+        
+    plt.close(fig)
+        
         
         
         

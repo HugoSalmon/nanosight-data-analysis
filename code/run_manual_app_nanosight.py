@@ -7,7 +7,7 @@ from app_nanosight import App
     
 # """ Lea """
 
-path = Path(datapath, "data_wei_sylvain")
+path = Path(datapath, "data_Sarah_Reddy")
 
 data_app = App(data_dir=path,
                 autosampler=False,
@@ -15,8 +15,9 @@ data_app = App(data_dir=path,
                 replicate_prefix="-")
 
 data_app.run_manual()
-data_app.export_data()
-data_app.run_clustering_total_concentration_nanosight()
+data_app.plot_nanosight()
+# data_app.export_data()
+# data_app.run_clustering_total_concentration_nanosight()
 
 
 
