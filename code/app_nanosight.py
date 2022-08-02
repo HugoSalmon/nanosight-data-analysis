@@ -1149,7 +1149,7 @@ class App():
             
             dic_exp = {n: np.array(self.name_experiments)[np.array([i for i in range(len(nums)) if nums[i]==n])] for n in unique_nums}
 
-            plot_all_conds_nanosight(self.concentration_distributions, dic_exp=dic_exp, list_conds = unique_nums, total_concentrations=self.total_concentrations, savepath=Path(resultspath, self.export_dir, "Groups comparison", "groups_comparison_label_"+name_group+".pdf"))
+            plot_all_conds_nanosight(self.concentration_distributions, dic_exp=dic_exp, list_conds = unique_nums, total_concentrations=self.total_concentrations, savepath=Path(resultspath, self.export_dir, "Groups comparison", "groups_comparison_"+name_group+".pdf"))
 
 
         if not self.manual:    
