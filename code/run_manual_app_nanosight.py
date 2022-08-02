@@ -15,8 +15,8 @@ data_app = App(data_dir=path,
                 replicate_prefix="-")
 
 data_app.run_manual()
-data_app.plot_nanosight()
-# data_app.export_data()
+# data_app.plot_nanosight()
+data_app.export_data()
 # data_app.run_clustering_total_concentration_nanosight()
 
 

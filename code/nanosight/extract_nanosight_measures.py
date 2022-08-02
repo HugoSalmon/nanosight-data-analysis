@@ -45,11 +45,13 @@ def extract_nanosight_experiment_measures(directory_path, autosampler=False, dil
         bin_centers.append(results_distributions["Bin centre (nm)"].values)
 
         for col in [column for column in results_distributions.columns if "Bin centre" not in column]:
-            results_distributions[col] = results_distributions[col] * dilution_factor        
+            results_distributions[col] = results_distributions[col] * dilution_factor  
+            
+        results_distributions["Standard deviation"] = results_distributions["Standard error"]*np.sqrt(5)
 
         results_distributions.columns = [col+" "+name_experiment if col!="Bin centre (nm)" else col for col in results_distributions.columns]
 
-
+        
 
 
 

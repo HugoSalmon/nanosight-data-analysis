@@ -155,6 +155,7 @@ def plot_all_conds_nanosight(results_table, dic_exp, list_conds, total_concentra
     
     colors = ["cyan", "dodgerblue", "darkblue", "orange", "tomato", "darkred"]    + ["cyan", "dodgerblue", "darkblue", "orange", "tomato", "darkred"]  + ["cyan", "dodgerblue", "darkblue", "orange", "tomato", "darkred"]  + ["cyan", "dodgerblue", "darkblue", "orange", "tomato", "darkred"]  
 
+    colors += 5*colors
 
     bin_centers = results_table["Bin centre (nm)"].values
     bin_diffs = np.array([bin_centers[0]*2] + list(bin_centers[1:] - bin_centers[:-1]))
