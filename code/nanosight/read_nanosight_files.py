@@ -6,7 +6,7 @@ import pandas
 
 
 
-def read_experiment_summary_file(filepath, autosampler=False):
+def read_experiment_summary_file(filepath):
     
     
     """
@@ -51,23 +51,27 @@ def read_experiment_summary_file(filepath, autosampler=False):
         start_index = np.where(is_start)[0][0]
 
 
-        if not autosampler:
+        # if not autosampler:
 
-            # is_start = rows_series.apply(lambda s: True if "Bin centre (nm)" in s  else False)
+        #     # is_start = rows_series.apply(lambda s: True if "Bin centre (nm)" in s  else False)
         
-            # start_index = np.where(is_start)[0][0]
+        #     # start_index = np.where(is_start)[0][0]
 
-            results_distributions = pandas.read_csv(filepath, skiprows=start_index+1, sep=",", encoding = "ISO-8859-1", 
-                                header=0, usecols=range(8)) 
+        #     results_distributions = pandas.read_csv(filepath, skiprows=start_index+1, sep=",", encoding = "ISO-8859-1", 
+        #                         header=0)#, usecols=range(8)) 
     
 
-            # results = pandas.read_csv(filepath, sep=",", skiprows=start_results_index, usecols=range(8), encoding = "ISO-8859-1")   
+        #     # results = pandas.read_csv(filepath, sep=",", skiprows=start_results_index, usecols=range(8), encoding = "ISO-8859-1")   
  
-        else:
+        # else:
             
 
-            results_distributions = pandas.read_csv(filepath, skiprows=start_index+1, sep=",", encoding = "ISO-8859-1", 
-                                header=0, usecols=range(6))
+        results_distributions = pandas.read_csv(filepath, skiprows=start_index+1, sep=",", encoding = "ISO-8859-1", 
+                                header=0)
+            
+        for col in [column for column in results_distributions.columns if "Unnamed:" in column]:
+            results_distributions.drop(col, axis=1, inplace=True)
+
 
         for i in range(len(results_distributions)):
 
@@ -95,7 +99,7 @@ def read_experiment_summary_file(filepath, autosampler=False):
         cols_videos = [col for col in results_distributions.columns if "Video" in col]
         
 
-        if autosampler:
+        if "Concentration average" not in results_distributions.columns:
 
             results_distributions["Concentration average"] = results_distributions[cols_videos].mean(axis=1)
             results_distributions["Standard error"] = results_distributions[cols_videos].std(axis=1) / np.sqrt(len(cols_videos))

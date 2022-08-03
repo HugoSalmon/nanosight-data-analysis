@@ -7,17 +7,17 @@ from app_nanosight import App
     
 # """ Lea """
 
-path = Path(datapath, "data_Sarah_Reddy")
+path = Path(datapath, "Data Lea NTA Videodrop")
 
 data_app = App(data_dir=path,
-                autosampler=False,
-                dilution_prefix="d",
-                replicate_prefix="-")
+                dilution_prefix="D",
+                replicate_prefix="rep", group_replicates=True)
 
 data_app.run_manual()
 # data_app.plot_nanosight()
 data_app.export_data()
-# data_app.run_clustering_total_concentration_nanosight()
+data_app.run_clustering_normalized_nanosight_size_concentration_distributions_wasserstein()
+data_app.run_clustering_total_concentration_nanosight()
 
 
 

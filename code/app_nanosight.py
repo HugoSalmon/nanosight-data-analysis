@@ -37,12 +37,10 @@ ratio_pady = 1 if platform.system() == 'Linux' else 0.5
 
 class App():
         
-    def __init__(self, data_dir="", autosampler=False,  
-                       dilution_prefix="dilution", replicate_prefix="replicate",
+    def __init__(self, data_dir="", dilution_prefix="dilution", replicate_prefix="replicate",
                        group_replicates=False, groups=None):
 
         self.data_dir = data_dir
-        self.autosampler=autosampler
         self.dilution_prefix=dilution_prefix
         self.replicate_prefix = replicate_prefix
         self.group_replicates = group_replicates
@@ -87,7 +85,6 @@ class App():
         self.name_data_directory_tkinter_var = tkinter.StringVar(self.root)
         # self.dirname_nanosight = tkinter.StringVar(self.root)
 
-        self.autosampler_tkinter_var = tkinter.BooleanVar(self.root)
         self.group_replicates_tkinter_var = tkinter.BooleanVar(self.root)
         
         self.replicate_prefix_tkinter_var = tkinter.StringVar(self.root, value="replicate")
@@ -134,27 +131,27 @@ class App():
         chosen_directory.grid(column=2, row=1, pady=40*ratio_pady, padx=50*ratio_padx)
 
 
-        autosampler_title = tkinter.Label(self.load_data_frame, text="Autosampler export ?", bg=bg_color, fg="black")
-        autosampler_title.grid(column=1, row=2, pady=40*ratio_pady)
+        # autosampler_title = tkinter.Label(self.load_data_frame, text="Autosampler export ?", bg=bg_color, fg="black")
+        # autosampler_title.grid(column=1, row=2, pady=40*ratio_pady)
         
-        check_autosampler = tkinter.Checkbutton(self.load_data_frame, text="Yes", variable=self.autosampler_tkinter_var, bg=bg_color)
-        check_autosampler.grid(column=2, row=2, pady=40*ratio_pady)
+        # check_autosampler = tkinter.Checkbutton(self.load_data_frame, text="Yes", variable=self.autosampler_tkinter_var, bg=bg_color)
+        # check_autosampler.grid(column=2, row=2, pady=40*ratio_pady)
 
         dilution_title = tkinter.Label(self.load_data_frame, text="Dilution prefix", bg=bg_color, fg="black")
-        dilution_title.grid(column=1, row=3, pady=40*ratio_pady)
+        dilution_title.grid(column=1, row=2, pady=40*ratio_pady)
         
         dilution_choose = tkinter.Entry(self.load_data_frame, textvariable=self.dilution_prefix_tkinter_var, width=9)
-        dilution_choose.grid(column=2, row=3, pady=40*ratio_pady)
+        dilution_choose.grid(column=2, row=2, pady=40*ratio_pady)
 
         replicate_title = tkinter.Label(self.load_data_frame, text="Replicate prefix", bg=bg_color, fg="black")
-        replicate_title.grid(column=1, row=4, pady=40*ratio_pady)
+        replicate_title.grid(column=1, row=3, pady=40*ratio_pady)
         
         replicate_choose = tkinter.Entry(self.load_data_frame, textvariable=self.replicate_prefix_tkinter_var, width=9)
-        replicate_choose.grid(column=2, row=4, pady=40*ratio_pady)
+        replicate_choose.grid(column=2, row=3, pady=40*ratio_pady)
 
 
         button_export_nanosight = tkinter.Button(self.load_data_frame, text = "Load" , command = self.load_data, bg="white", fg="black")
-        button_export_nanosight.grid(row=6, columnspan=3, column=0, pady=40*ratio_pady)
+        button_export_nanosight.grid(row=5, columnspan=3, column=0, pady=40*ratio_pady)
 
         """"""""""""""""""""""""""
         """%%%%%%%%%%%%%%%%%"""
@@ -470,7 +467,7 @@ class App():
                 self.data_correctly_loaded.destroy()
                 
             self.dilution_prefix = self.dilution_prefix_tkinter_var.get()
-            self.autosampler = self.autosampler_tkinter_var.get()
+            # self.autosampler = self.autosampler_tkinter_var.get()
             self.replicate_prefix = self.replicate_prefix_tkinter_var.get()
 
         
@@ -480,11 +477,11 @@ class App():
             self.total_concentrations, self.dilutions, \
                 self.particles_per_frame, self.validity , self.sizes_attributes \
                     = extract_nanosight_experiment_measures(Path(datapath, self.data_dir), \
-                        dilution_prefix=self.dilution_prefix, autosampler=self.autosampler) 
+                        dilution_prefix=self.dilution_prefix)#, autosampler=self.autosampler) 
                         
                         
                         
-        print(self.concentration_distributions)
+
                         
         if not self.manual:
             self.is_label1 = tkinter.BooleanVar(self.root, value=False)
@@ -498,9 +495,11 @@ class App():
      
             self.name_groups_tkinter_var = [tkinter.StringVar(self.root, value="Label 1"), tkinter.StringVar(self.root, value="Label 2")]             
 
-                        
+
         self.size_concentration_attributes = pandas.merge(self.total_concentrations, self.sizes_attributes, left_index=True, right_index=True)
                         
+
+        
         particles_per_frame = [", ".join(["%.1f"%(self.particles_per_frame.loc[name]["Video "+str(k)]) \
                                           for k in range(1,6)]) for name in self.name_experiments]
         
@@ -514,8 +513,9 @@ class App():
  
         self.replicates = get_replicates(self.name_experiments, replicate_prefix = self.replicate_prefix)
         
+        
+        
         self.replicates_exist = (np.sum([len(v)>1 for k,v in self.replicates.items()])>0)
-
 
         
         if not self.manual :
@@ -621,35 +621,6 @@ class App():
                
        
             
-                           
-            self.analysis_frame = tkinter.LabelFrame(self.root, text="Analysis", font = TkFont.Font(weight="bold"))
-            self.analysis_frame.configure(background=bg_color)
-            self.analysis_frame.grid(row = 0, column = 2, sticky="N", padx=20*ratio_padx, pady=20*ratio_pady)
-
-            button_export = tkinter.Button(self.analysis_frame, text = "Export data" , command = self.export_data, bg="white", fg="black")
-            button_export.grid(row=1, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
-            
-            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Plot distributions and concentrations" , command = self.plot_nanosight, bg="white", fg="black")
-            button_launch_analysis.grid(row=2, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
-            
-            
-            start = 3
-            
-
-            if self.replicates_exist:
-                check_group_replicates = tkinter.Checkbutton(self.analysis_frame, text="Group replicates", variable=self.group_replicates_tkinter_var, command=self.set_group_replicates, bg=bg_color)
-                check_group_replicates.grid(column=0, row=4, pady=40*ratio_pady)
-                start = 5
-
-            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Clustering normalized distributions" , command = self.run_clustering_normalized_nanosight_size_concentration_distributions_wasserstein, bg="white", fg="black")
-            button_launch_analysis.grid(row=start, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
-            
-            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Clustering total concentrations" , command = self.run_clustering_total_concentration_nanosight, bg="white", fg="black")
-            button_launch_analysis.grid(row=start+1, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
-                   
-            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Statistical test between normalized distributions" , command = self.plot_nanosight_kolmogorov_test_matrix, bg="white", fg="black")
-            button_launch_analysis.grid(row=start+2, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
-
 
             
 
@@ -687,12 +658,16 @@ class App():
  
  
         for i, shorted_name in enumerate(list(self.replicates.keys())):
-
             
+
             replicates_names = self.replicates[shorted_name]
             
-            if len(replicates_names)==1:
+            if shorted_name in self.size_concentration_attributes.index:
                 continue
+
+            
+            # if len(replicates_names)==1:
+            #     continue
                             
             results = []
             cols = []
@@ -722,6 +697,40 @@ class App():
 
 
 
+
+        if not self.manual :
+
+                           
+            self.analysis_frame = tkinter.LabelFrame(self.root, text="Analysis", font = TkFont.Font(weight="bold"))
+            self.analysis_frame.configure(background=bg_color)
+            self.analysis_frame.grid(row = 0, column = 2, sticky="N", padx=20*ratio_padx, pady=20*ratio_pady)
+
+            button_export = tkinter.Button(self.analysis_frame, text = "Export data" , command = self.export_data, bg="white", fg="black")
+            button_export.grid(row=1, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
+            
+            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Plot distributions and concentrations" , command = self.plot_nanosight, bg="white", fg="black")
+            button_launch_analysis.grid(row=2, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
+            
+            
+            start = 3
+            
+
+            if self.replicates_exist:
+                check_group_replicates = tkinter.Checkbutton(self.analysis_frame, text="Group replicates", variable=self.group_replicates_tkinter_var, command=self.set_group_replicates, bg=bg_color)
+                check_group_replicates.grid(column=0, row=3, pady=40*ratio_pady)
+                start = 4
+
+            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Clustering normalized distributions" , command = self.run_clustering_normalized_nanosight_size_concentration_distributions_wasserstein, bg="white", fg="black")
+            button_launch_analysis.grid(row=start, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
+            
+            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Clustering total concentrations" , command = self.run_clustering_total_concentration_nanosight, bg="white", fg="black")
+            button_launch_analysis.grid(row=start+1, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
+                   
+            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Statistical test between normalized distributions" , command = self.plot_nanosight_kolmogorov_test_matrix, bg="white", fg="black")
+            button_launch_analysis.grid(row=start+2, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
+
+
+
     def export_data(self):
 
                 
@@ -739,8 +748,7 @@ class App():
         for name in self.name_experiments:
             new_cols = ["Concentration average "+name, "Standard deviation "+name]
             
-            if not self.autosampler:
-                new_cols += ["Concentration (particles / ml) Video "+str(k)+" "+name for k in np.arange(1,6)]
+            new_cols += ["Concentration (particles / ml) Video "+str(k)+" "+name for k in np.arange(1,6)]
             
             cols += new_cols
             
@@ -820,6 +828,9 @@ class App():
 
 
         list_names = self.name_experiments
+        
+        
+        
         list_concentrations = [self.size_concentration_attributes.loc[name]["Concentration Average"] for name in list_names]
 
         fig, ax = plt.subplots(1, figsize=(20,15))
@@ -839,6 +850,8 @@ class App():
             fig, ax = plt.subplots(1, figsize=(20,15))
         
             list_names = list(self.replicates.keys())
+            
+            
             list_concentrations = [self.size_concentration_attributes.loc[name]["Concentration Average"] for name in list_names]
             ordered_list_index = np.array(list_concentrations).argsort()
     
@@ -893,10 +906,12 @@ class App():
         distance_matrix_dataframe = compute_distance_matrix_distribs(list_distribs, bin_centers, distance="Wasserstein", normalized=True, list_names=list_names, ax=ax)
 
 
+
+
         results_clustering = run_hierarchical_clustering(distance_matrix_dataframe, 
                                              metric="precomputed",                                                                                 
                                              labelsize=14,
-                                             linkage_method="complete",
+                                             linkage_method="average",
                                              optimize=True)
 
         title = "Wasserstein_normalized_size_distribution_nanosight"
@@ -917,7 +932,9 @@ class App():
         if not self.manual:    
             self.ok_normalized_clustering = tkinter.Label(self.analysis_frame, text = "Ok", bg=bg_color, fg="orangered")
             
+            
             if self.replicates_exist:
+                
                 start = 4
             else:
                 start = 3
@@ -973,6 +990,7 @@ class App():
 
     def run_clustering_total_concentration_nanosight(self):
 
+        
 
         
         if hasattr(self, 'ok_concentration_clustering'):
@@ -984,20 +1002,21 @@ class App():
             list_names = list(self.replicates.keys())
             
             
-            list_concentrations = [self.total_concentrations_replicates["Average Concentration (Particles / ml)"][name] for name in list_names]
+            # list_concentrations = [self.total_concentrations["Average Concentration (Particles / ml)"][name] for name in list_names]
             
             
         else:
             list_names = self.name_experiments
-        
-            list_concentrations = [self.size_concentration_attributes.loc[name]["Concentration Average"] for name in list_names]
+            
+
+        list_concentrations = [self.size_concentration_attributes.loc[name]["Concentration Average"] for name in list_names]
 
         distance_matrix_dataframe = compute_distance_matrix(list_concentrations, distance="euclidean", list_names=list_names)
 
         results_clustering = run_hierarchical_clustering(distance_matrix_dataframe, 
                                              metric="precomputed",                                                                                 
                                              labelsize=14,
-                                             linkage_method="complete",
+                                             linkage_method="average",
                                              optimize=True)
 
 
@@ -1011,7 +1030,7 @@ class App():
         
         ordered_colors = [colors_dendrogram[l-1]  if np.sum(results_clustering["labels"]==l)>1 else "black"
                           for l in results_clustering["labels"][ordered_list_index]]
-        
+
         ordered_list_concentrations = np.array(list_concentrations)[ordered_list_index]
         ordered_name_exp = np.array(list_names)[ordered_list_index]
         ax.bar(x=np.arange(len(ordered_list_concentrations)), height=ordered_list_concentrations, color=ordered_colors)#, labels=ordered_name_exp)#, marker=".", s=30)
@@ -1038,7 +1057,7 @@ class App():
 
 
 
-
+    
 
     def run_clustering_emd(self):
 
@@ -1069,7 +1088,7 @@ class App():
                                                                          names, 
                                                                          distance="emd",
                                                                          labelsize=14,
-                                                                         linkage_method="complete",
+                                                                         linkage_method="average",
                                                                          criterion="maxclust",
                                                                          maxclust=int(len(list_distribs)/5),
                                                                          path_to_save_fig = Path(resultspath, self.export_dir, "clustering", "hierarchical_clustering_"+"area.pdf"))
@@ -1102,7 +1121,7 @@ class App():
         results_clustering = run_hierarchical_clustering(distance_matrix_dataframe, 
                                              metric="precomputed",                                                                                 
                                              labelsize=14,
-                                             linkage_method="complete",
+                                             linkage_method="average",
                                              optimize=True)
 
         title = "combined_distances_size_distribution_nanosight"
@@ -1110,7 +1129,7 @@ class App():
         results_clustering = run_hierarchical_clustering(distance_matrix_dataframe, 
                                              metric="precomputed",                                                                                 
                                              labelsize=14,
-                                             linkage_method="complete",
+                                             linkage_method="average",
                                              optimize=True)
 
         plot_hierarchical_clustering(distance_matrix_dataframe, results_clustering, labelsize=13,

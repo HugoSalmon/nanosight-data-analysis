@@ -11,7 +11,7 @@ from collections import OrderedDict
 
 
 
-def extract_nanosight_experiment_measures(directory_path, autosampler=False, dilution_prefix="dilution", raw_suffix="_1", keep_videos=True):
+def extract_nanosight_experiment_measures(directory_path, dilution_prefix="dilution", raw_suffix="_1", keep_videos=True):
 
     files_dic = list_nanosight_files_in_directory(directory_path, raw_suffix=raw_suffix)
     
@@ -38,7 +38,7 @@ def extract_nanosight_experiment_measures(directory_path, autosampler=False, dil
             
                 
         experiment_summary_file = files_dic[name_experiment]["experiment_summary_file"]    
-        results_distributions, results_concentrations, results_reliable, results_size = read_experiment_summary_file(Path(directory_path, experiment_summary_file), autosampler=autosampler)
+        results_distributions, results_concentrations, results_reliable, results_size = read_experiment_summary_file(Path(directory_path, experiment_summary_file))
  
     
         
@@ -151,7 +151,7 @@ def extract_nanosight_experiment_measures(directory_path, autosampler=False, dil
         else:
             concatenated_sizes = pandas.concat([concatenated_sizes, new_results_size], axis=0)
             
-                                                
+                                         
                 
     ##verif equal bins
     for i, j in list(itertools.combinations(np.arange(len(bin_centers)), 2)):
@@ -166,6 +166,7 @@ def extract_nanosight_experiment_measures(directory_path, autosampler=False, dil
     if not keep_videos:
         for col in [col for col in concatenated_results_distributions.columns if "Video" in col]:
             concatenated_results_distributions.drop(col, axis=1, inplace=True)
+            
             
             
     
