@@ -15,9 +15,9 @@ data_app = App(data_dir=path,
 
 data_app.run_manual()
 # data_app.plot_nanosight()
-data_app.export_data()
-data_app.run_clustering_normalized_nanosight_size_concentration_distributions_wasserstein()
-data_app.run_clustering_total_concentration_nanosight()
+# data_app.export_data()
+# data_app.run_clustering_normalized_nanosight_size_concentration_distributions_wasserstein()
+# data_app.run_clustering_total_concentration_nanosight()
 
 
 

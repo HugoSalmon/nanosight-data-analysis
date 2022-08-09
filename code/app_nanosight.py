@@ -1171,6 +1171,28 @@ class App():
             plot_all_conds_nanosight(self.concentration_distributions, dic_exp=dic_exp, list_conds = unique_nums, total_concentrations=self.total_concentrations, savepath=Path(resultspath, self.export_dir, "Groups comparison", "groups_comparison_"+name_group+".pdf"))
 
 
+
+    
+        if self.nb_groups_tkinter_var.get()==2:
+            
+            nums_group1 = self.groups[0]
+            nums_group2 = self.groups[1]
+            
+            name_group1 = self.name_groups[0]
+            name_group2 = self.name_groups[1]
+            
+            nums = [str(nums_group1[u])+"-"+str(nums_group2[u]) for u in range(len(nums_group1))]
+            
+            unique_nums = np.unique(nums)
+            
+            
+            dic_exp = {n: np.array(self.name_experiments)[np.array([i for i in range(len(nums)) if nums[i]==n])] for n in unique_nums}
+
+            plot_all_conds_nanosight(self.concentration_distributions, dic_exp=dic_exp, list_conds = unique_nums, total_concentrations=self.total_concentrations, savepath=Path(resultspath, self.export_dir, "Groups comparison", "groups_comparison_"+name_group1+"_"+name_group2+".pdf"))
+
+            
+
+
         if not self.manual:    
             self.ok_groups_comparison = tkinter.Label(self.analysis_frame, text = "Ok", bg=bg_color, fg="orangered")
 
@@ -1180,5 +1202,4 @@ class App():
                 start = 3
             self.ok_groups_comparison.grid(row=start+4, column=1, pady=40*ratio_pady, padx=20*ratio_padx)
     
-
 

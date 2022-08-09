@@ -13,7 +13,18 @@ def get_replicates(name_experiments, replicate_prefix="-"):
                 
         if is_replicate:
 
-            str_num = name_experiment.split(replicate_prefix)[-1]
+            replicate_chain = name_experiment.split(replicate_prefix)[-1]
+            
+            
+            str_num = ""
+            
+            for s in range(len(replicate_chain)):
+                if replicate_chain[s].isdigit():
+                    str_num += replicate_chain[s]
+                    
+                else:
+                    break
+
 
             num = int(str_num)
 

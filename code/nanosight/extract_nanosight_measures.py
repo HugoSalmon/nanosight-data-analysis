@@ -24,9 +24,20 @@ def extract_nanosight_experiment_measures(directory_path, dilution_prefix="dilut
     for i, name_experiment in enumerate(sorted_name_experiments):
 
         try:
-            splitted = name_experiment.split(" ")
-            dilution_string = [s for s in splitted if dilution_prefix in s][-1]
-            dilution_factor = int(dilution_string.replace(dilution_prefix,""))
+            dilution_chain = name_experiment.split(dilution_prefix)[-1]
+            
+            dilution_factor = ""
+            
+            for s in range(len(dilution_chain)):
+                if dilution_chain[s].isdigit():
+                    dilution_factor += dilution_chain[s]
+                    
+                else:
+                    break
+
+
+            dilution_factor = int(dilution_factor)
+            
             # print(name_experiment, dilution_factor)
             dilutions.append(dilution_factor)
 
