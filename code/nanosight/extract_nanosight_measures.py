@@ -65,10 +65,7 @@ def extract_nanosight_experiment_measures(directory_path, dilution_prefix="dilut
         
 
 
-
-        results_concentrations.insert(0, "Concentration Average", results_concentrations.mean(axis=1).values[0])
-        results_concentrations.insert(1, "Concentration Std", results_concentrations.std(axis=1).values[0])      
-        
+ 
                 
         # if not autosampler:
         #     cols_videos = [col for col in results_distributions if "Video" in col]    
@@ -102,6 +99,10 @@ def extract_nanosight_experiment_measures(directory_path, dilution_prefix="dilut
 
 
 
+        results_concentrations.insert(0, "Average of Total Concentration", results_concentrations.mean(axis=1).values[0])
+        results_concentrations.insert(1, "Std of Total Concentration", results_concentrations.std(axis=1).values[0])      
+       
+
         if i==0:
             concatenated_distributions = results_distributions.copy()
         else:
@@ -114,6 +115,9 @@ def extract_nanosight_experiment_measures(directory_path, dilution_prefix="dilut
             concatenated_concentrations = results_concentrations.copy()
         else:
             concatenated_concentrations = pandas.concat([concatenated_concentrations, results_concentrations], axis=0)
+            
+            
+        
 
 
 
@@ -144,8 +148,8 @@ def extract_nanosight_experiment_measures(directory_path, dilution_prefix="dilut
 
             new_df = pandas.DataFrame(np.array(res).reshape(1,-1), columns = [index+" "+col for col in results_size.columns])
                         
-            new_df.insert(0, index+" Average", np.mean(res))
-            new_df.insert(1, index+" Std", np.std(res))
+            new_df.insert(0, "Average of "+index, np.mean(res))
+            new_df.insert(1, "Std of "+index, np.std(res))
 
 
             if k==0:

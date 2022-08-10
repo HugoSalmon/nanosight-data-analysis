@@ -672,7 +672,7 @@ class App():
             results = []
             cols = []
             
-            for attribute in ["Concentration", "Mean", "Mode", "SD", "D10", "D50", "D90"]:
+            for attribute in ["Total Concentration", "Size Mean", "Size Mode", "Size SD", "Size D10", "Size D50", "Size D90"]:
             
                 cols_video = [col for col in self.size_concentration_attributes if "Video" in col and attribute in col]
                 values = self.size_concentration_attributes.loc[replicates_names][cols_video].values.flatten()
@@ -681,7 +681,7 @@ class App():
                 std_value = np.std(values)
                 
                 results += [mean_value, std_value]
-                cols += [attribute+" Average", attribute+" Std"]
+                cols += ["Average of "+attribute, "Std of "+attribute]
                 
  
             df_short_name = pandas.DataFrame(np.array(results).reshape(1,-1), columns=cols)
@@ -738,10 +738,12 @@ class App():
             self.ok_export.destroy()
 
         create_missing_dir([resultspath, self.export_dir, "Data export"])
-
-        to_save = self.concentration_distributions.copy()
         
-        to_save = to_save[[col for col in to_save if "Raw" not in col]]
+        
+        ### Save concentration distribution csv
+
+        concentration_distributions_to_save = self.concentration_distributions.copy()
+        concentration_distributions_to_save = concentration_distributions_to_save[[col for col in concentration_distributions_to_save if "Raw" not in col]]
         
         cols = ["Bin centre (nm)"]
                         
@@ -755,34 +757,21 @@ class App():
         for shorted_name in list(self.replicates.keys()):
             
             cols += ["Concentration average "+shorted_name, "Standard deviation "+shorted_name]
-            
-            
-            
-        to_save = to_save[cols]
+   
+        concentration_distributions_to_save = concentration_distributions_to_save[cols] 
+        concentration_distributions_to_save.columns = [col.replace(" (particles / ml)","") for col in concentration_distributions_to_save.columns]
+        concentration_distributions_to_save.to_csv(Path(resultspath, self.export_dir, "Data export", "size_concentration_distributions.csv"), index=False)
+    
+        ### Save size concentration attributes
         
-        to_save.columns = [col.replace(" (particles / ml)","") for col in to_save.columns]
-        
-        to_save.to_csv(Path(resultspath, self.export_dir, "Data export", "table_size_concentration_distributions.csv"), index=False)
-                    
-        # sorted_table_concentrations = self.total_concentrations.sort_values(by="Average Concentration (Particles / ml)")
-        # sorted_table_concentrations["Sample name / Replicate group name"] = sorted_table_concentrations.index
-        
-        
-        
-        # sorted_table_concentrations_replicates = self.total_concentrations_replicates.sort_values(by="Average Concentration (Particles / ml)")
-        # sorted_table_concentrations_replicates["Sample name / Replicate group name"] = sorted_table_concentrations_replicates.index
-                
-        
-        # sorted_concat_table_concentrations = pandas.concat([sorted_table_concentrations, sorted_table_concentrations_replicates], axis=0)
+        size_concentration_attributes_to_save = self.size_concentration_attributes.copy()
+        size_concentration_attributes_to_save.insert(0, "Sample name", size_concentration_attributes_to_save.index)
+        size_concentration_attributes_to_save.reset_index(inplace=True, drop=True)
+        size_concentration_attributes_to_save.to_csv(Path(resultspath, self.export_dir, "Data export", "size_concentration_attributes"), index=False)
 
+        ### Save samples list
 
-        # new_cols_order = ["Sample name / Replicate group name"] + [col for col in sorted_table_concentrations if "Sample name" not in col]
-        # sorted_concat_table_concentrations = sorted_concat_table_concentrations[new_cols_order]
-        # sorted_concat_table_concentrations.to_csv(Path(resultspath, self.export_dir, "Data export", "total_concentrations"), index=False)
-
-        self.size_concentration_attributes.to_csv(Path(resultspath, self.export_dir, "Data export", "table_size_concentration_attributes"))
-
-        self.samples_list.to_csv(Path(resultspath, self.export_dir, "Data export", "table_samples_list.csv"), index=False)
+        self.samples_list.to_csv(Path(resultspath, self.export_dir, "Data export", "samples_list.csv"), index=False)
 
         # self.concatenated_sizes["Sample name / Replicate group name"] = self.concatenated_sizes
         # self.concatenated_sizes.to_csv(Path(results_path, self.export_dir, "Data export", "size_attributes.csv"), index=False)

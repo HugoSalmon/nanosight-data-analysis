@@ -45,26 +45,9 @@ def read_experiment_summary_file(filepath):
         
         """ Read concentration distributions """
 
-
         is_start = rows_series.apply(lambda s: True if s=="Graph Data-" else False)
         
         start_index = np.where(is_start)[0][0]
-
-
-        # if not autosampler:
-
-        #     # is_start = rows_series.apply(lambda s: True if "Bin centre (nm)" in s  else False)
-        
-        #     # start_index = np.where(is_start)[0][0]
-
-        #     results_distributions = pandas.read_csv(filepath, skiprows=start_index+1, sep=",", encoding = "ISO-8859-1", 
-        #                         header=0)#, usecols=range(8)) 
-    
-
-        #     # results = pandas.read_csv(filepath, sep=",", skiprows=start_results_index, usecols=range(8), encoding = "ISO-8859-1")   
- 
-        # else:
-            
 
         results_distributions = pandas.read_csv(filepath, skiprows=start_index+1, sep=",", encoding = "ISO-8859-1", 
                                 header=0)
@@ -81,23 +64,19 @@ def read_experiment_summary_file(filepath):
                 
                 break
 
-        
         results_distributions = results_distributions.iloc[:stop_index]
 
         results_distributions = results_distributions.astype(float)
 
-
         ### Rename columns  
-        cols_videos = [col for col in results_distributions.columns if "Concentration (particles / ml)" in col]
-        
-        
+        cols_videos = [col for col in results_distributions.columns if "Concentration (particles / ml)" in col] 
         dic_rename = {col: "Concentration (particles / ml) Video " + str(int(col.split(".")[1])+1) if "." in col else "Concentration (particles / ml) Video 1" for col in cols_videos}
         dic_rename.update({"Standard Error": "Standard error"})
-
         results_distributions.rename(columns = dic_rename, inplace=True)
         
         cols_videos = [col for col in results_distributions.columns if "Video" in col]
         
+        ### Add concentration average if does not exist (for autosampler files)
 
         if "Concentration average" not in results_distributions.columns:
 
@@ -106,9 +85,7 @@ def read_experiment_summary_file(filepath):
 
         results_distributions = results_distributions[["Bin centre (nm)", "Concentration average", "Standard error"] + cols_videos]
         
-
-
-        """ Get other results """
+        ### Get other results
 
         details_experiment = pandas.read_csv(filepath, sep=",", usecols=range(2), encoding = "ISO-8859-1")            
             
@@ -123,13 +100,9 @@ def read_experiment_summary_file(filepath):
         results_concentration.drop("index", axis=1, inplace=True)
         results_concentration.drop("key", axis=1, inplace=True)
         results_concentration = results_concentration.astype(float)
-        
-        
-        results_concentration.rename(columns={"Video "+str(k): "Concentration Video "+str(k) for k in range(1, 6)}, inplace=True)
-        
 
-
-
+        results_concentration.rename(columns={"Video "+str(k): "Total Concentration Video "+str(k) for k in range(1, 6)}, inplace=True)
+        
         name_details = np.array(results)[:,0]
      
         where_particles_per_frame = (name_details == "Particles per frame")
@@ -142,10 +115,9 @@ def read_experiment_summary_file(filepath):
         where_key = ((results["key"]=="Validity of concentration measurement") | (results["key"]=="Particles per frame"))
         results_reliable = pandas.DataFrame(results[where_key].iloc[:2,:])
         results_reliable.reset_index(inplace=True, drop=True)
-        
     
-        index_size = np.where(results["key"]=="[Size Data]")[0][0]
-        size_results = results[index_size:]
+        # index_size = np.where(results["key"]=="[Size Data]")[0][0]
+        # size_results = results[index_size:]
         
         index_size = np.where(results["key"]=="[Size Data]")[0][0]
         index_end_size = np.where(results["key"]=="Graph Data")[0][0]
@@ -159,13 +131,11 @@ def read_experiment_summary_file(filepath):
             
         results_size.index = np.array(index)
         results_size = results_size.astype(float)
-
+                
+        results_size.index = ["Size "+name for name in results_size.index]
 
     except:
         raise ValueError("Error when reading file", filepath)
-        
-        
-        
 
     return results_distributions, results_concentration, results_reliable, results_size
 
