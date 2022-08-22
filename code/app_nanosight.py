@@ -69,8 +69,6 @@ class App():
         self.root.columnconfigure(1, weight=1)
         self.root.columnconfigure(2, weight=1)
         
-
-        
         self.screen_width = self.root.winfo_screenwidth()
         self.screen_height = self.root.winfo_screenheight()
         
@@ -647,8 +645,9 @@ class App():
             
         
         """ Add results for groups of replicates """
-        
+
         for i, shorted_name in enumerate(list(self.replicates.keys())):
+    
             
             cols_video = [col for col in self.concentration_distributions if "Video" in col and shorted_name in col and "Raw" not in col]
 
@@ -748,12 +747,10 @@ class App():
         cols = ["Bin centre (nm)"]
                         
         for name in self.name_experiments:
-            new_cols = ["Concentration average "+name, "Standard deviation "+name]
+            cols += ["Concentration average "+name, "Standard deviation "+name]
             
-            new_cols += ["Concentration (particles / ml) Video "+str(k)+" "+name for k in np.arange(1,6)]
-            
-            cols += new_cols
-            
+            cols += ["Concentration (particles / ml) Video "+str(k)+" "+name for k in np.arange(1,6)]
+                        
         for shorted_name in list(self.replicates.keys()):
             
             cols += ["Concentration average "+shorted_name, "Standard deviation "+shorted_name]
@@ -791,69 +788,68 @@ class App():
 
         create_missing_dir([resultspath, self.export_dir, "plot_distributions_concentrations"])
 
+        ## Plot individual distributions
+        
         for i, name in enumerate(self.name_experiments):
 
             plot_nanosight_size_distribution(self.concentration_distributions, name, save_path_fig = Path(path_to_save, "plot_distributions_concentrations", "nanosight_size_concentration_"+name+".png"))
-            # plot_nanosight_size_densities(self.concentration_distributions, name, save_path_fig = Path(path_to_save, "distributions_figures", "nanosight_size_density_"+name+".png"))
-   
-     
+
+        ## Plot distributions by replicates group
    
         for i, shorted_name in enumerate(list(self.replicates.keys())):
             
             if len(self.replicates[shorted_name])==1:
                 continue
             
-            
             cols_video = [col for col in self.concentration_distributions if "Video" in col and shorted_name in col and "Raw" not in col]
 
             self.concentration_distributions["Concentration average "+shorted_name] = self.concentration_distributions[cols_video].mean(axis=1)
             self.concentration_distributions["Standard error "+shorted_name] = self.concentration_distributions[cols_video].std(axis=1) / np.sqrt(len(cols_video))
 
-            if np.sum([True if "Raw "+col in self.concentration_distributions.columns else False for col in cols_video])==len(cols_video):
-                self.concentration_distributions["Raw Concentration average "+shorted_name] = self.concentration_distributions[["Raw "+col for col in cols_video]].mean(axis=1)
-                self.concentration_distributions["Raw Standard error "+shorted_name] = self.concentration_distributions[["Raw "+col for col in cols_video]].std(axis=1) / np.sqrt(len(cols_video))
-            
             plot_nanosight_size_distribution_replicates(self.concentration_distributions, shorted_name, replicate_names=self.replicates[shorted_name], save_path_fig = Path(path_to_save, "plot_distributions_concentrations", shorted_name+".png"))
 
-
+        ## Plot size concentration attributes
+        
+        print(self.size_concentration_attributes)
+        
         list_names = self.name_experiments
         
-        
-        
-        list_concentrations = [self.size_concentration_attributes.loc[name]["Concentration Average"] for name in list_names]
+        for attribute in ["Total Concentration", "Size Mean", "Size Mode", "Size SD", "Size D10", "Size D50", "Size D90"]:
 
-        fig, ax = plt.subplots(1, figsize=(20,15))
-        
-        ordered_list_index = np.array(list_concentrations).argsort()
-
-        ordered_list_concentrations = np.array(list_concentrations)[ordered_list_index]
-        ordered_name_exp = np.array(list_names)[ordered_list_index]
-        ax.bar(x=np.arange(len(ordered_list_concentrations)), height=ordered_list_concentrations)#, color=ordered_colors)#, labels=ordered_name_exp)#, marker=".", s=30)
-        ax.set_xticks(np.arange(len(ordered_list_concentrations)))
-        ax.set_xticklabels(ordered_name_exp, fontsize=18, rotation=45, rotation_mode="anchor", ha="right")
-        fig.tight_layout()
-        fig.savefig(Path(path_to_save, "plot_distributions_concentrations", "concentrations.pdf"))
-        
-        if self.replicates_exist:
-
-            fig, ax = plt.subplots(1, figsize=(20,15))
-        
-            list_names = list(self.replicates.keys())
-            
-            
-            list_concentrations = [self.size_concentration_attributes.loc[name]["Concentration Average"] for name in list_names]
-            ordered_list_index = np.array(list_concentrations).argsort()
+            list_attribute = [self.size_concentration_attributes.loc[name]["Average of "+attribute] for name in list_names]
     
-            ordered_list_concentrations = np.array(list_concentrations)[ordered_list_index]
+            fig, ax = plt.subplots(1, figsize=(20,15))
+            
+            ordered_list_index = np.array(list_attribute).argsort()
+    
+            ordered_list_concentrations = np.array(list_attribute)[ordered_list_index]
             ordered_name_exp = np.array(list_names)[ordered_list_index]
             ax.bar(x=np.arange(len(ordered_list_concentrations)), height=ordered_list_concentrations)#, color=ordered_colors)#, labels=ordered_name_exp)#, marker=".", s=30)
             ax.set_xticks(np.arange(len(ordered_list_concentrations)))
             ax.set_xticklabels(ordered_name_exp, fontsize=18, rotation=45, rotation_mode="anchor", ha="right")
             fig.tight_layout()
-            fig.savefig(Path(path_to_save, "plot_distributions_concentrations", "concentrations_grouped_by_replicates.pdf"))
-    
-                    
+            fig.savefig(Path(path_to_save, "plot_distributions_concentrations", attribute+".pdf"))
             
+        if self.replicates_exist:
+            
+            for attribute in ["Total Concentration", "Size Mean", "Size Mode", "Size SD", "Size D10", "Size D50", "Size D90"]:
+
+    
+                fig, ax = plt.subplots(1, figsize=(20,15))
+            
+                list_names = list(self.replicates.keys())
+                            
+                list_attribute = [self.size_concentration_attributes.loc[name]["Average of "+attribute] for name in list_names]
+                ordered_list_index = np.array(list_attribute).argsort()
+        
+                ordered_list_concentrations = np.array(list_attribute)[ordered_list_index]
+                ordered_name_exp = np.array(list_names)[ordered_list_index]
+                ax.bar(x=np.arange(len(ordered_list_concentrations)), height=ordered_list_concentrations)#, color=ordered_colors)#, labels=ordered_name_exp)#, marker=".", s=30)
+                ax.set_xticks(np.arange(len(ordered_list_concentrations)))
+                ax.set_xticklabels(ordered_name_exp, fontsize=18, rotation=45, rotation_mode="anchor", ha="right")
+                fig.tight_layout()
+                fig.savefig(Path(path_to_save, "plot_distributions_concentrations", attribute+"_grouped_by_replicates.pdf"))
+        
 
 
         if not self.manual:    

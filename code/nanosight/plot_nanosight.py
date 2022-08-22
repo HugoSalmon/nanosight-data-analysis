@@ -151,8 +151,13 @@ def plot_all_conds_nanosight(results_table, dic_exp, list_conds, total_concentra
                               lim_right=None, savepath=None):
 
 
-    fig, ax = plt.subplots(len(list_conds),2, figsize=(25,15), sharex=True, sharey=False)
-    
+    fig, axes = plt.subplots(len(list_conds),2, figsize=(25,15), sharex=True, sharey=False)
+            
+    if len(list_conds)==1:
+        ax = axes.reshape(1,-1)
+    else:
+        ax = axes
+        
     colors = ["cyan", "dodgerblue", "darkblue", "orange", "tomato", "darkred"]    + ["cyan", "dodgerblue", "darkblue", "orange", "tomato", "darkred"]  + ["cyan", "dodgerblue", "darkblue", "orange", "tomato", "darkred"]  + ["cyan", "dodgerblue", "darkblue", "orange", "tomato", "darkred"]  
 
     colors += 5*colors
@@ -164,15 +169,15 @@ def plot_all_conds_nanosight(results_table, dic_exp, list_conds, total_concentra
     for i, key in enumerate(list_conds):
         
         for n, name in enumerate(dic_exp[key]):
-            
-            
+
             concentration = results_table["Concentration average "+name].values
 
             # area = np.sum(concentration * bin_diffs)
             area = simpson(x=bin_centers, y=concentration)
 
             normalized_concentration = concentration / area
-            c_totale = total_concentrations.loc[name]["Concentration Average"]
+            c_totale = total_concentrations.loc[name]["Average of Total Concentration"]
+            
             # reliable = reliable_results.loc[name]["Is reliable"]
             
             if colors_time is not None:
@@ -181,7 +186,9 @@ def plot_all_conds_nanosight(results_table, dic_exp, list_conds, total_concentra
             else:
                 color=colors[n]
 
+
             ax[i,0].plot(bin_centers, concentration, color=color, label=name + " C=%.2e"%c_totale)  
+                        
             ax[i,1].plot(bin_centers, normalized_concentration, color=color, label=name+" (normalized)")  
 
 
