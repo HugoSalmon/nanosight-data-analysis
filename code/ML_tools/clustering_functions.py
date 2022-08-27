@@ -77,7 +77,7 @@ def plot_paired_matrix(distance_matrix_dataframe, path_to_save_fig, title, index
 
     ax.set_aspect("equal")
     fig.tight_layout()
-    fig.savefig(Path(path_to_save_fig, title+"_paired_matrix.pdf"))
+    fig.savefig(Path(path_to_save_fig, title))
     
           
 
@@ -116,8 +116,6 @@ def plot_clustering_results(list_distribs, bin_centers, labels, normalized, list
         
         
         names_cluster = np.array(list_names)[np.where(labels==i)]
-        print("Cluster", i+1)
-        print(names_cluster)
         
         distribs_cluster = distribs_cluster[:,:stop]
         bin_centers = bin_centers[:stop]
@@ -152,7 +150,7 @@ def plot_clustering_results(list_distribs, bin_centers, labels, normalized, list
             ax3[i].plot(bin_centers, distrib, alpha=0.3, label=names_cluster[v])
             ax3[i].legend(fontsize=8)
                 
-        ax3[i].plot(bin_centers, mean_distrib_cluster, color=color_cluster, label="Cluster "+str(i+1)+" ("+"n="+str(np.sum(labels==i))+")")   
+        # ax3[i].plot(bin_centers, mean_distrib_cluster, color=color_cluster, label="Cluster "+str(i+1)+" ("+"n="+str(np.sum(labels==i))+")")   
 
     # for k, (u,v) in enumerate(list(itertools.combinations(np.unique(labels), 2))):
         
@@ -186,7 +184,7 @@ def plot_clustering_results(list_distribs, bin_centers, labels, normalized, list
     fig.savefig(Path(path_to_save, title+"_mean_distribs.pdf"))
     
     fig3.tight_layout()
-    fig3.savefig(Path(path_to_save, title+"_distribs.pdf"))
+    fig3.savefig(Path(path_to_save, title+"_distributions_plot.pdf"))
     
     plt.close(fig)
     plt.close(fig3)

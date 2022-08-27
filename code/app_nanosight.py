@@ -21,7 +21,9 @@ from nanosight.extract_nanosight_measures import extract_nanosight_experiment_me
 from nanosight.plot_nanosight import plot_nanosight_size_distribution, plot_nanosight_size_densities, \
                                     plot_nanosight_size_distribution_replicates, plot_all_conds_nanosight
 from app_tools import get_replicates, create_missing_dir
-
+from constants import dir_plots, dir_csv_exports, text_button_csv_export, text_button_data_illustrations,text_button_test, \
+                            text_button_cluster_distributions, text_button_cluster_attributes, dir_distributions_clustering, dir_attributes_clustering, \
+                                dir_test
 
 
 ### Set app parameters
@@ -704,10 +706,10 @@ class App():
             self.analysis_frame.configure(background=bg_color)
             self.analysis_frame.grid(row = 0, column = 2, sticky="N", padx=20*ratio_padx, pady=20*ratio_pady)
 
-            button_export = tkinter.Button(self.analysis_frame, text = "Export data" , command = self.export_data, bg="white", fg="black")
+            button_export = tkinter.Button(self.analysis_frame, text = text_button_csv_export , command = self.export_data, bg="white", fg="black")
             button_export.grid(row=1, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
             
-            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Plot distributions and concentrations" , command = self.plot_nanosight, bg="white", fg="black")
+            button_launch_analysis = tkinter.Button(self.analysis_frame, text = text_button_data_illustrations , command = self.plot_nanosight, bg="white", fg="black")
             button_launch_analysis.grid(row=2, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
             
             
@@ -719,13 +721,13 @@ class App():
                 check_group_replicates.grid(column=0, row=3, pady=40*ratio_pady)
                 start = 4
 
-            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Clustering normalized distributions" , command = self.run_clustering_normalized_nanosight_size_concentration_distributions_wasserstein, bg="white", fg="black")
+            button_launch_analysis = tkinter.Button(self.analysis_frame, text = text_button_cluster_distributions , command = self.run_clustering_normalized_size_concentration_distributions_wasserstein_nanosight, bg="white", fg="black")
             button_launch_analysis.grid(row=start, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
             
-            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Clustering total concentrations" , command = self.run_clustering_total_concentration_nanosight, bg="white", fg="black")
+            button_launch_analysis = tkinter.Button(self.analysis_frame, text = text_button_cluster_attributes , command = self.run_clustering_size_concentration_attributes_nanosight, bg="white", fg="black")
             button_launch_analysis.grid(row=start+1, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
                    
-            button_launch_analysis = tkinter.Button(self.analysis_frame, text = "Statistical test between normalized distributions" , command = self.plot_nanosight_kolmogorov_test_matrix, bg="white", fg="black")
+            button_launch_analysis = tkinter.Button(self.analysis_frame, text = text_button_test , command = self.plot_nanosight_kolmogorov_test_matrix, bg="white", fg="black")
             button_launch_analysis.grid(row=start+2, column=0, pady=40*ratio_pady, padx=20*ratio_padx)
 
 
@@ -736,7 +738,7 @@ class App():
         if hasattr(self, 'ok_export'):
             self.ok_export.destroy()
 
-        create_missing_dir([resultspath, self.export_dir, "Data export"])
+        create_missing_dir([resultspath, self.export_dir, dir_csv_exports])
         
         
         ### Save concentration distribution csv
@@ -757,21 +759,18 @@ class App():
    
         concentration_distributions_to_save = concentration_distributions_to_save[cols] 
         concentration_distributions_to_save.columns = [col.replace(" (particles / ml)","") for col in concentration_distributions_to_save.columns]
-        concentration_distributions_to_save.to_csv(Path(resultspath, self.export_dir, "Data export", "size_concentration_distributions.csv"), index=False)
+        concentration_distributions_to_save.to_csv(Path(resultspath, self.export_dir, dir_csv_exports, "size_concentration_distributions.csv"), index=False)
     
         ### Save size concentration attributes
         
         size_concentration_attributes_to_save = self.size_concentration_attributes.copy()
         size_concentration_attributes_to_save.insert(0, "Sample name", size_concentration_attributes_to_save.index)
         size_concentration_attributes_to_save.reset_index(inplace=True, drop=True)
-        size_concentration_attributes_to_save.to_csv(Path(resultspath, self.export_dir, "Data export", "size_concentration_attributes"), index=False)
+        size_concentration_attributes_to_save.to_csv(Path(resultspath, self.export_dir, dir_csv_exports, "size_concentration_attributes"), index=False)
 
         ### Save samples list
 
-        self.samples_list.to_csv(Path(resultspath, self.export_dir, "Data export", "samples_list.csv"), index=False)
-
-        # self.concatenated_sizes["Sample name / Replicate group name"] = self.concatenated_sizes
-        # self.concatenated_sizes.to_csv(Path(results_path, self.export_dir, "Data export", "size_attributes.csv"), index=False)
+        self.samples_list.to_csv(Path(resultspath, self.export_dir, dir_csv_exports, "samples_list.csv"), index=False)
 
         if not self.manual:    
             self.ok_export = tkinter.Label(self.analysis_frame, text = "Ok", bg=bg_color, fg="orangered")
@@ -786,13 +785,13 @@ class App():
 
         path_to_save = Path(resultspath, self.export_dir)
 
-        create_missing_dir([resultspath, self.export_dir, "plot_distributions_concentrations"])
+        create_missing_dir([resultspath, self.export_dir, dir_plots])
 
         ## Plot individual distributions
         
         for i, name in enumerate(self.name_experiments):
 
-            plot_nanosight_size_distribution(self.concentration_distributions, name, save_path_fig = Path(path_to_save, "plot_distributions_concentrations", "nanosight_size_concentration_"+name+".png"))
+            plot_nanosight_size_distribution(self.concentration_distributions, name, save_path_fig = Path(path_to_save, dir_plots, "size_concentration_"+name+".pdf"))
 
         ## Plot distributions by replicates group
    
@@ -806,7 +805,7 @@ class App():
             self.concentration_distributions["Concentration average "+shorted_name] = self.concentration_distributions[cols_video].mean(axis=1)
             self.concentration_distributions["Standard error "+shorted_name] = self.concentration_distributions[cols_video].std(axis=1) / np.sqrt(len(cols_video))
 
-            plot_nanosight_size_distribution_replicates(self.concentration_distributions, shorted_name, replicate_names=self.replicates[shorted_name], save_path_fig = Path(path_to_save, "plot_distributions_concentrations", shorted_name+".png"))
+            plot_nanosight_size_distribution_replicates(self.concentration_distributions, shorted_name, replicate_names=self.replicates[shorted_name], save_path_fig = Path(path_to_save, dir_plots, shorted_name+".pdf"))
 
         ## Plot size concentration attributes
         
@@ -828,7 +827,8 @@ class App():
             ax.set_xticks(np.arange(len(ordered_list_concentrations)))
             ax.set_xticklabels(ordered_name_exp, fontsize=18, rotation=45, rotation_mode="anchor", ha="right")
             fig.tight_layout()
-            fig.savefig(Path(path_to_save, "plot_distributions_concentrations", attribute+".pdf"))
+            fig.savefig(Path(path_to_save, dir_plots, attribute+".pdf"))
+            plt.close(fig)
             
         if self.replicates_exist:
             
@@ -848,8 +848,8 @@ class App():
                 ax.set_xticks(np.arange(len(ordered_list_concentrations)))
                 ax.set_xticklabels(ordered_name_exp, fontsize=18, rotation=45, rotation_mode="anchor", ha="right")
                 fig.tight_layout()
-                fig.savefig(Path(path_to_save, "plot_distributions_concentrations", attribute+"_grouped_by_replicates.pdf"))
-        
+                fig.savefig(Path(path_to_save, dir_plots, attribute+"_grouped_by_replicates.pdf"))
+                plt.close(fig)
 
 
         if not self.manual:    
@@ -864,7 +864,7 @@ class App():
 
 
                 
-    def run_clustering_normalized_nanosight_size_concentration_distributions_wasserstein(self, keys=None):
+    def run_clustering_normalized_size_concentration_distributions_wasserstein_nanosight(self, keys=None):
 
         
         if not self.manual:
@@ -872,7 +872,7 @@ class App():
                 self.ok_normalized_clustering.destroy()
                 
 
-        create_missing_dir([resultspath, self.export_dir, "clustering", "normalized_distributions"])   
+        create_missing_dir([resultspath, self.export_dir, "clustering", dir_distributions_clustering])   
                     
         if self.group_replicates is True:
             list_names = list(self.replicates.keys())
@@ -899,19 +899,19 @@ class App():
                                              linkage_method="average",
                                              optimize=True)
 
-        title = "Wasserstein_normalized_size_distribution_nanosight"
+        title = "Hierarchical_clustering_concentration_size_distribution_Wasserstein_distance"
 
 
         plot_hierarchical_clustering(distance_matrix_dataframe, results_clustering, labelsize=13,
-                                 path_to_save_fig = Path(resultspath, self.export_dir, "clustering", "normalized_distributions"), 
-                                 title=title+".pdf")
+                                 path_to_save_fig = Path(resultspath, self.export_dir, "clustering", dir_distributions_clustering), 
+                                 title=title)
 
         plot_clustering_results(list_distribs, 
                                 bin_centers, 
                                 results_clustering["labels"], 
                                 list_names=list_names, 
                                 normalized=True,
-                                path_to_save = Path(resultspath, self.export_dir, "clustering", "normalized_distributions"), title="hierarchical_clustering_"+title)
+                                path_to_save = Path(resultspath, self.export_dir, "clustering", dir_distributions_clustering), title=title)
 
 
         if not self.manual:    
@@ -935,7 +935,7 @@ class App():
         if hasattr(self, 'ok_stat_tests'):
             self.ok_stat_tests.destroy()
 
-        create_missing_dir([resultspath, self.export_dir, "test_normalized_distributions"])
+        create_missing_dir([resultspath, self.export_dir, dir_test])
 
 
         if self.group_replicates is True:
@@ -951,9 +951,9 @@ class App():
 
         distance_matrix_dataframe = compute_test_diff_matrix_distribs(list_distribs, bin_centers, test=test, normalized=True, list_names=list_names)
                 
-        plot_paired_matrix(distance_matrix_dataframe, path_to_save_fig=Path(resultspath, self.export_dir, "test_normalized_distributions"), title=test+"_statistical_test_normalized_distribution")
+        plot_paired_matrix(distance_matrix_dataframe, path_to_save_fig=Path(resultspath, self.export_dir, dir_test), title=test+"_test_pvalues_matrix.pdf")
 
-        distance_matrix_dataframe.to_csv(Path(resultspath, self.export_dir, "test_normalized_distributions", test+"_statistical_test_normalized_distribution"))
+        distance_matrix_dataframe.to_csv(Path(resultspath, self.export_dir, dir_test, test+"_test_pvalues_matrix.csv"))
 
         if not self.manual:    
             self.ok_stat_tests = tkinter.Label(self.analysis_frame, text = "Ok", bg=bg_color, fg="orangered")
@@ -968,75 +968,73 @@ class App():
 
     def plot_nanosight_kolmogorov_test_matrix(self):
 
-        self._plot_nanosight_test_matrix("Kolmogorov")
+        self._plot_nanosight_test_matrix("Kolmogorov_smirnov")
 
 
 
 
-    def run_clustering_total_concentration_nanosight(self):
-
-        
+    def run_clustering_size_concentration_attributes_nanosight(self):
 
         
-        if hasattr(self, 'ok_concentration_clustering'):
-            self.ok_concentration_clustering.destroy()
+
         
-        create_missing_dir([resultspath, self.export_dir, "clustering", "total_concentration"])
+        if hasattr(self, 'ok_attributes_clustering'):
+            self.ok_attributes_clustering.destroy()
+        
+        create_missing_dir([resultspath, self.export_dir, "clustering", dir_attributes_clustering])
 
         if self.group_replicates is True:
             list_names = list(self.replicates.keys())
-            
-            
-            # list_concentrations = [self.total_concentrations["Average Concentration (Particles / ml)"][name] for name in list_names]
-            
-            
+
         else:
             list_names = self.name_experiments
+          
             
-
-        list_concentrations = [self.size_concentration_attributes.loc[name]["Concentration Average"] for name in list_names]
-
-        distance_matrix_dataframe = compute_distance_matrix(list_concentrations, distance="euclidean", list_names=list_names)
-
-        results_clustering = run_hierarchical_clustering(distance_matrix_dataframe, 
-                                             metric="precomputed",                                                                                 
-                                             labelsize=14,
-                                             linkage_method="average",
-                                             optimize=True)
-
-
-        plot_hierarchical_clustering(distance_matrix_dataframe, results_clustering, labelsize=13,
-                                 path_to_save_fig = Path(resultspath, self.export_dir, "clustering", "total_concentration"), 
-                                 title="total_concentration_nanosight.pdf")
-
-        fig, ax = plt.subplots(1, figsize=(20,15))
-
-        ordered_list_index = np.array(list_concentrations).argsort()
+                 
         
-        ordered_colors = [colors_dendrogram[l-1]  if np.sum(results_clustering["labels"]==l)>1 else "black"
-                          for l in results_clustering["labels"][ordered_list_index]]
+        for attribute in ["Total Concentration", "Size Mean", "Size Mode", "Size SD", "Size D10", "Size D50", "Size D90"]:
 
-        ordered_list_concentrations = np.array(list_concentrations)[ordered_list_index]
-        ordered_name_exp = np.array(list_names)[ordered_list_index]
-        ax.bar(x=np.arange(len(ordered_list_concentrations)), height=ordered_list_concentrations, color=ordered_colors)#, labels=ordered_name_exp)#, marker=".", s=30)
-        ax.set_xticks(np.arange(len(ordered_list_concentrations)))
-        ax.set_xticklabels(ordered_name_exp, fontsize=18, rotation=45, rotation_mode="anchor", ha="right")
-        fig.tight_layout()
-        
-        
-        
-        fig.savefig(Path(resultspath, self.export_dir, "clustering", "total_concentration", "total_concentration_nanosight.pdf"))
+            list_attributes = [self.size_concentration_attributes.loc[name]["Average of "+attribute] for name in list_names]
 
-        plt.close(fig)
+            distance_matrix_dataframe = compute_distance_matrix(list_attributes, distance="euclidean", list_names=list_names)
+
+            results_clustering = run_hierarchical_clustering(distance_matrix_dataframe, 
+                                                 metric="precomputed",                                                                                 
+                                                 labelsize=14,
+                                                 linkage_method="average",
+                                                 optimize=True)
+
+            plot_hierarchical_clustering(distance_matrix_dataframe, results_clustering, labelsize=13,
+                                     path_to_save_fig = Path(resultspath, self.export_dir, "clustering", dir_attributes_clustering), 
+                                     title="Hierarchical_clustering_"+attribute+"_Euclidean_distance")
+    
+            fig, ax = plt.subplots(1, figsize=(20,15))
+    
+            ordered_list_index = np.array(list_attributes).argsort()
+            
+            ordered_colors = [colors_dendrogram[l-1]  if np.sum(results_clustering["labels"]==l)>1 else "black"
+                              for l in results_clustering["labels"][ordered_list_index]]
+    
+            ordered_list_concentrations = np.array(list_attributes)[ordered_list_index]
+            ordered_name_exp = np.array(list_names)[ordered_list_index]
+            ax.bar(x=np.arange(len(ordered_list_concentrations)), height=ordered_list_concentrations, color=ordered_colors)#, labels=ordered_name_exp)#, marker=".", s=30)
+            ax.set_xticks(np.arange(len(ordered_list_concentrations)))
+            ax.set_xticklabels(ordered_name_exp, fontsize=18, rotation=45, rotation_mode="anchor", ha="right")
+            ax.set_title("Average Silhouette coefficient: %.2f"%results_clustering["silhouette"], fontsize=20)
+            fig.tight_layout()
+        
+            fig.savefig(Path(resultspath, self.export_dir, "clustering", dir_attributes_clustering, "Hierarchical_clustering_"+attribute+"_Euclidean_distance.pdf"))
+    
+            plt.close(fig)
 
         if not self.manual:    
-            self.ok_concentration_clustering = tkinter.Label(self.analysis_frame, text = "Ok", bg=bg_color, fg="orangered")
+            self.ok_attributes_clustering = tkinter.Label(self.analysis_frame, text = "Ok", bg=bg_color, fg="orangered")
 
             if self.replicates_exist:
                 start = 4
             else:
                 start = 3
-            self.ok_concentration_clustering.grid(row=start+1, column=1, pady=40*ratio_pady, padx=20*ratio_padx)
+            self.ok_attributes_clustering.grid(row=start+1, column=1, pady=40*ratio_pady, padx=20*ratio_padx)
     
 
 
@@ -1044,89 +1042,89 @@ class App():
 
     
 
-    def run_clustering_emd(self):
+    # def run_clustering_emd(self):
 
-        create_missing_dir([resultspath, self.export_dir, "clustering"])
+    #     create_missing_dir([resultspath, self.export_dir, "clustering"])
 
         
-        cols_concentration = ["Concentration average "+name for name in self.name_experiments]
-        list_distribs = [self.concentration_distributions[col] for col in cols_concentration]
-        bin_centers = self.concentration_distributions["Bin centre (nm)"].values
-        bin_diffs = np.array([bin_centers[0]*2] + list(bin_centers[1:] - bin_centers[:-1]))
-        bins =  [0] + list(bin_centers + bin_diffs/2)
+    #     cols_concentration = ["Concentration average "+name for name in self.name_experiments]
+    #     list_distribs = [self.concentration_distributions[col] for col in cols_concentration]
+    #     bin_centers = self.concentration_distributions["Bin centre (nm)"].values
+    #     bin_diffs = np.array([bin_centers[0]*2] + list(bin_centers[1:] - bin_centers[:-1]))
+    #     bins =  [0] + list(bin_centers + bin_diffs/2)
         
-        list_area = [np.sum(distrib * bin_diffs) for distrib in list_distribs]
-        normalized_distribs = [distrib / list_area[u] for u, distrib in enumerate(list_distribs)]
+    #     list_area = [np.sum(distrib * bin_diffs) for distrib in list_distribs]
+    #     normalized_distribs = [distrib / list_area[u] for u, distrib in enumerate(list_distribs)]
  
-        list_concentrations = self.total_concentrations["Average Concentration (Particles / ml)"].values
+    #     list_concentrations = self.total_concentrations["Average Concentration (Particles / ml)"].values
            
 
         
  
-        names = self.name_experiments
+    #     names = self.name_experiments
 
         
 
 
-        distance_matrix, index_, labels, silhouette = hierarchical_clustering_distrib_list(list_distribs,
-                                                                         bin_centers,
-                                                                         names, 
-                                                                         distance="emd",
-                                                                         labelsize=14,
-                                                                         linkage_method="average",
-                                                                         criterion="maxclust",
-                                                                         maxclust=int(len(list_distribs)/5),
-                                                                         path_to_save_fig = Path(resultspath, self.export_dir, "clustering", "hierarchical_clustering_"+"area.pdf"))
-                            #          
+    #     distance_matrix, index_, labels, silhouette = hierarchical_clustering_distrib_list(list_distribs,
+    #                                                                      bin_centers,
+    #                                                                      names, 
+    #                                                                      distance="emd",
+    #                                                                      labelsize=14,
+    #                                                                      linkage_method="average",
+    #                                                                      criterion="maxclust",
+    #                                                                      maxclust=int(len(list_distribs)/5),
+    #                                                                      path_to_save_fig = Path(resultspath, self.export_dir, "clustering", "hierarchical_clustering_"+"area.pdf"))
+    #                         #          
 
         
-        plot_clustering_results(list_distribs, 
-                                bin_centers, 
-                                labels, 
-                                list_names=names, 
-                                path_to_save = Path(resultspath, self.export_dir, "clustering", "hierarchical_clustering_interpretation_"+"area.pdf"))
+    #     plot_clustering_results(list_distribs, 
+    #                             bin_centers, 
+    #                             labels, 
+    #                             list_names=names, 
+    #                             path_to_save = Path(resultspath, self.export_dir, "clustering", "hierarchical_clustering_interpretation_"+"area.pdf"))
         
  
 
 
-    def run_clustering_combined_distances_nanosight(self):
+    # def run_clustering_combined_distances_nanosight(self):
  
 
-        create_missing_dir([resultspath, self.export_dir, "clustering", "combined_distances"])
+    #     create_missing_dir([resultspath, self.export_dir, "clustering", "combined_distances"])
 
         
-        cols_concentration = ["Concentration average "+name for name in self.name_experiments]
-        list_distribs = [self.concentration_distributions[col] for col in cols_concentration]
-        bin_centers = self.concentration_distributions["Bin centre (nm)"].values
+    #     cols_concentration = ["Concentration average "+name for name in self.name_experiments]
+    #     list_distribs = [self.concentration_distributions[col] for col in cols_concentration]
+    #     bin_centers = self.concentration_distributions["Bin centre (nm)"].values
 
-        list_concentrations = [self.total_concentrations["Average Concentration (Particles / ml)"][name] for name in self.name_experiments]
+    #     list_concentrations = [self.total_concentrations["Average Concentration (Particles / ml)"][name] for name in self.name_experiments]
 
-        distance_matrix_dataframe = compute_distance_matrix_mixte_wasserstein_euclidean(list_distribs, bin_centers, list_concentrations, list_names=self.videodrop_name_experiments)
+    #     distance_matrix_dataframe = compute_distance_matrix_mixte_wasserstein_euclidean(list_distribs, bin_centers, list_concentrations, list_names=self.videodrop_name_experiments)
 
-        results_clustering = run_hierarchical_clustering(distance_matrix_dataframe, 
-                                             metric="precomputed",                                                                                 
-                                             labelsize=14,
-                                             linkage_method="average",
-                                             optimize=True)
+    #     results_clustering = run_hierarchical_clustering(distance_matrix_dataframe, 
+    #                                          metric="precomputed",                                                                                 
+    #                                          labelsize=14,
+    #                                          linkage_method="average",
+    #                                          optimize=True)
 
-        title = "combined_distances_size_distribution_nanosight"
+    #     title = "combined_distances_size_distribution_nanosight"
 
-        results_clustering = run_hierarchical_clustering(distance_matrix_dataframe, 
-                                             metric="precomputed",                                                                                 
-                                             labelsize=14,
-                                             linkage_method="average",
-                                             optimize=True)
+    #     results_clustering = run_hierarchical_clustering(distance_matrix_dataframe, 
+    #                                          metric="precomputed",                                                                                 
+    #                                          labelsize=14,
+    #                                          linkage_method="average",
+    #                                          optimize=True)
 
-        plot_hierarchical_clustering(distance_matrix_dataframe, results_clustering, labelsize=13,
-                                 path_to_save_fig = Path(resultspath, self.export_dir, "clustering"), 
-                                 title=title+".pdf")
+    #     plot_hierarchical_clustering(distance_matrix_dataframe, results_clustering, labelsize=13,
+    #                              path_to_save_fig = Path(resultspath, self.export_dir, "clustering"), 
+    #                              title=title+".pdf")
    
-        plot_clustering_results(list_distribs, 
-                                bin_centers,
-                                normalized=False,
-                                labels=results_clustering["labels"], 
-                                list_names=self.name_experiments, 
-                                path_to_save = Path(resultspath, self.export_dir, "clustering", title+".pdf"))
+    #     plot_clustering_results(list_distribs, 
+    #                             bin_centers,
+    #                             normalized=False,
+    #                             labels=results_clustering["labels"], 
+    #                             list_names=self.name_experiments, 
+    #                             path_to_save = Path(resultspath, self.export_dir, "clustering", title+".pdf"))
         
 
 

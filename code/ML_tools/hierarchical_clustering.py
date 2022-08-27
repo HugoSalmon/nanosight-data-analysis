@@ -108,7 +108,7 @@ def run_hierarchical_clustering(table, metric, linkage_method, criterion="maxclu
 
     if optimize:
         
-        fig, ax = plt.subplots(1)
+        # fig, ax = plt.subplots(1)
         all_silhouettes = []
         thresholds = np.arange(0.025, 1, 0.025)
         
@@ -118,14 +118,20 @@ def run_hierarchical_clustering(table, metric, linkage_method, criterion="maxclu
                                 metric=metric, linkage_method=linkage_method, threshold=thres, \
                                 criterion="threshold", optimize=False)
                 
+                
+            # n_clusters = len(np.unique(results_clustering["labels"]))
+            
+            # if n_clusters < 2 or n_clusters == table.shape[1]:
+            #     continue
+                
             if results_clustering["silhouette"] is None:
-                silhouette = 0
+                silhouette = -1
             else:
                 silhouette = results_clustering["silhouette"]
             
             all_silhouettes.append(silhouette)
 
-            ax.scatter(thres, silhouette)
+            # ax.scatter(thres, silhouette)
             
         all_silhouettes = np.array(all_silhouettes)
         best = all_silhouettes.argmax()
@@ -186,7 +192,8 @@ def run_hierarchical_clustering(table, metric, linkage_method, criterion="maxclu
 
 
 def plot_hierarchical_clustering(table, results_clustering, labelsize=13, title="", path_to_save_fig=None):   
-
+    
+    
     fig, ax = plt.subplots(2, 1, figsize=(20,10))
 
     plot_heatmap(results_clustering["ordered_dist_matrix"], ax=ax[0])
@@ -215,18 +222,20 @@ def plot_hierarchical_clustering(table, results_clustering, labelsize=13, title=
 
     ax_dend.set_xticklabels(ax_dend.get_xticklabels(), fontsize=labelsize, rotation=45, rotation_mode="anchor", ha="right")
 
+    ax_dend.set_title("Average Silhouette coefficient: %.2f"%results_clustering["silhouette"])
+
     
     fig.tight_layout()
 
     if path_to_save_fig is not None:
-        fig2.savefig(Path(path_to_save_fig, title+"_distance_matrix.pdf"))
+        fig2.savefig(Path(path_to_save_fig, title+"_matrix.pdf"))
     
-        fig.savefig(Path(path_to_save_fig, title+"_hierarchical_clustering.pdf"))
+        fig.savefig(Path(path_to_save_fig, title+"_dendrogram.pdf"))
         
         plt.close(fig)
         plt.close(fig2)
         
-        results_clustering["ordered_dist_matrix"].to_csv(Path(path_to_save_fig, title+"_distance_matrix.csv"))
+        results_clustering["ordered_dist_matrix"].to_csv(Path(path_to_save_fig, title+"_matrix.csv"))
 
 
 

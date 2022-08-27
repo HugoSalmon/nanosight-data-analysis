@@ -36,7 +36,7 @@ def compute_distance_matrix_distribs(list_distribs, bin_centers, normalized, dis
     if distance=="emd" and not normalized:
         dist_func = lambda x, y: compute_emd(bin_centers, x,y)
 
-    if distance=="Kolmogorov" and normalized:
+    if distance=="Kolmogorov_smirnov" and normalized:
         dist_func = lambda x, y: kolmogorov_smirnoff_test_weighted(bin_centers, bin_centers, x, y)[0]
 
     if normalized:
@@ -107,7 +107,7 @@ def compute_test_diff_matrix_distribs(list_distribs, bin_centers, normalized, te
     list_area = [np.sum(distrib * bin_diffs) for distrib in list_distribs]
     normalized_distribs = [distrib / list_area[u] for u, distrib in enumerate(list_distribs)]
 
-    if test=="Kolmogorov" and normalized:
+    if test=="Kolmogorov_smirnov" and normalized:
         dist_func = lambda x, y: kolmogorov_smirnoff_test_weighted(bin_centers, bin_centers, x, y)[1]
 
     distance_matrix = np.asarray([[dist_func(list_distribs[u], list_distribs[v]) \
