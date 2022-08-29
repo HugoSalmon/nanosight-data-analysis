@@ -4,27 +4,27 @@
 
 from scipy.stats import wasserstein_distance, energy_distance
 import numpy as np
-import ot
+# import ot
 import matplotlib.pyplot as plt
-from ot import plot
-from ot.datasets import make_1D_gauss as gauss
+# from ot import plot
+# from ot.datasets import make_1D_gauss as gauss
 from scipy.stats import distributions
 from ML_tools.sklearn_tools import kolmogorov_smirnov_test_statistic
 
 
 
-def compute_emd(bin_centers, distrib1, distrib2):
+# def compute_emd(bin_centers, distrib1, distrib2):
     
-    sample1 = np.concatenate([bin_centers.reshape(-1,1), distrib1.values.reshape(-1,1)], axis=1)
-    sample2 = np.concatenate([bin_centers.reshape(-1,1), distrib2.values.reshape(-1,1)], axis=1)
+#     sample1 = np.concatenate([bin_centers.reshape(-1,1), distrib1.values.reshape(-1,1)], axis=1)
+#     sample2 = np.concatenate([bin_centers.reshape(-1,1), distrib2.values.reshape(-1,1)], axis=1)
         
-    x = bin_centers
-    M = ot.dist(sample1, sample2)
-    M /= M.max()
+#     x = bin_centers
+#     M = ot.dist(sample1, sample2)
+#     M /= M.max()
 
-    em_distance = ot.emd2(a=np.ones(len(sample1)),b=np.ones(len(sample1)),M=M)
+#     em_distance = ot.emd2(a=np.ones(len(sample1)),b=np.ones(len(sample1)),M=M)
     
-    return em_distance
+#     return em_distance
 
 
 
